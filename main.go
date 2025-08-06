@@ -1,35 +1,66 @@
 package main
 
 import (
-	// "fmt"
-	// helix "github.com/nicklaw5/helix"
-	"encoding/json"
-	browser "github.com/pkg/browser"
-	"net/http"
-	"net/url"
+	"fmt"
+	"time"
+
+	helix "github.com/nicklaw5/helix"
 )
+
+// need to make PR to helix
+// for DCF implementation
 
 const clientID = "cqyppegp5st5bk2tg1nglqfd5krd4l"
 
-func auth() {
-	response, err := http.PostForm("https://id.twitch.tv/oauth2/device", url.Values{
-		"client_id": {clientID},
-		"scopes":    {"user:read:follows user:read:subscriptions channel:read:subscriptions"},
+func main() {
+	client, err := helix.NewClient(&helix.Options{
+		ClientID: clientID,
 	})
-
 	if err != nil {
 		panic(err)
 	}
 
-	var body map[string]interface{}
-
-	if err := json.NewDecoder(response.Body).Decode(&body); err != nil {
+	rURI, err := client.RequestDeviceVerificationURI([]string{"user:read:follows", "user:read:subscriptions", "channel:read:subscriptions"})
+	if err != nil {
 		panic(err)
 	}
 
-	browser.OpenURL(body["verification_uri"].(string))
-}
+	fmt.Println(rURI.Data.VerificationURI)
 
-func main() {
-	auth()
+	ticker := time.NewTicker(5 * time.Second)
+	quit := make(chan struct{})
+	go func() {
+		for {
+			select {
+			case <-ticker.C:
+				rToken, err := client.RequestDeviceAccessToken(rURI.Data.DeviceCode, []string{"user:read:follows", "user:read:subscriptions", "channel:read:subscriptions"})
+				if err != nil {
+					panic(err)
+				}
+
+				fmt.Println(rToken.Data)
+
+				client.SetDeviceAccessToken(rToken.Data.AccessToken)
+				client.SetRefreshToken(rToken.Data.RefreshToken)
+			case <-quit:
+				ticker.Stop()
+				return
+			}
+		}
+	}()
+
+	for {
+		if client.GetRefreshToken() != "" {
+			break
+		}
+	}
+
+	resp, err := client.GetChannelInformation(&helix.GetChannelInformationParams{
+		BroadcasterID: "94753024",
+	})
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Println(resp.Data)
 }
