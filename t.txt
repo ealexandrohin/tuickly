@@ -7,12 +7,7 @@ import (
 	helix "github.com/nicklaw5/helix"
 )
 
-// need to make PR to helix
-// for DCF implementation
-
-const clientID = "cqyppegp5st5bk2tg1nglqfd5krd4l"
-
-func main() {
+func t() {
 	client, err := helix.NewClient(&helix.Options{
 		ClientID: clientID,
 	})
