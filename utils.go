@@ -24,3 +24,27 @@ func gradient(base lipgloss.Style, s string) string {
 	}
 	return str
 }
+
+func paginate[T any](
+	request func(after string) ([]T, string, error),
+) ([]T, error) {
+	var (
+		all    []T
+		cursor string
+	)
+
+	for {
+		items, nextCursor, err := request(cursor)
+		if err != nil {
+			return nil, err
+		}
+
+		all = append(all, items...)
+		if nextCursor == "" {
+			break
+		}
+		cursor = nextCursor
+	}
+
+	return all, nil
+}

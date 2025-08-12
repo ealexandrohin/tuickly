@@ -1,6 +1,10 @@
 package main
 
 import (
+	"strings"
+	"time"
+
+	"github.com/charmbracelet/bubbles/spinner"
 	"github.com/charmbracelet/lipgloss"
 )
 
@@ -18,6 +22,9 @@ var (
 	// colors
 	primary = purple
 	text    = white
+
+	// spinner
+	spinnerStyle = lipgloss.NewStyle().Foreground(primary)
 
 	// tab borders
 	tabBorder = lipgloss.Border{
@@ -49,50 +56,62 @@ var (
 	}
 
 	// tabs
-	tab       = lipgloss.NewStyle().Border(tabBorder).BorderForeground(primary).Padding(0, 1)
-	activeTab = tab.Border(activeTabBorder)
-	tabGap    = lipgloss.NewStyle().Border(tabGapBorder).BorderForeground(primary)
+	tabStyle       = lipgloss.NewStyle().Border(tabBorder).BorderForeground(primary).Padding(0, 1)
+	activeTabStyle = tabStyle.Border(activeTabBorder)
+	tabGapStyle    = lipgloss.NewStyle().Border(tabGapBorder).BorderForeground(primary)
 
 	// statusbar
-	status     = lipgloss.NewStyle().Foreground(lipgloss.Color(text)).Background(lipgloss.Color(primary)).Padding(0, 1)
-	statusBar  = lipgloss.NewStyle().Foreground(lipgloss.Color("#C1C6B2")).Background(lipgloss.Color("#353533")).Padding(0, 1)
-	statusTime = status.Align(lipgloss.Right)
+	statusStyle     = lipgloss.NewStyle().Foreground(lipgloss.Color(text)).Background(lipgloss.Color(primary)).Padding(0, 1)
+	statusBarStyle  = lipgloss.NewStyle().Foreground(lipgloss.Color("#C1C6B2")).Background(lipgloss.Color("#353533")).Padding(0, 1)
+	statusTimeStyle = statusStyle.Align(lipgloss.Right)
 
 	// dialog
-	dialog            = lipgloss.NewStyle().Border(lipgloss.NormalBorder()).BorderForeground(lipgloss.Color("#874BFD")).Padding(1, 0)
-	buttonStyle       = lipgloss.NewStyle().Foreground(lipgloss.Color("#FFF7DB")).Background(lipgloss.Color("#888B7E")).Padding(0, 3).MarginTop(1)
-	activeButtonStyle = buttonStyle.Foreground(lipgloss.Color("#FFF7DB")).Background(lipgloss.Color("#F25D94")).MarginRight(2).Underline(true)
+	dialogStyle = lipgloss.NewStyle().Border(lipgloss.NormalBorder()).BorderForeground(lipgloss.Color("#874BFD")).Padding(1, 0)
 )
+
+type Tab struct {
+	Title   string
+	Content string
+}
+
+type Window struct {
+	Width  int
+	Height int
+}
+
+type UI struct {
+	spinner.Model
+}
 
 func URIDialog(m Model) string {
 	URI := lipgloss.NewStyle().Width(len(m.Msg.(URIMsg).URI) + 4).Align(lipgloss.Center).Render(m.Msg.(URIMsg).URI)
 
 	return lipgloss.Place(m.Window.Width, m.Window.Height,
 		lipgloss.Center, lipgloss.Center,
-		dialog.Render(URI),
+		dialogStyle.Render(URI),
 	)
 }
 
-// func (m Model) headerView() string {
-// 	row := lipgloss.JoinHorizontal(
-// 		lipgloss.Center,
-// 		tab.Render("Live"),
-// 		activeTab.Render("Follows"),
-// 		tab.Render("ealexandrohin"),
-// 	)
-//
-// 	gap := tabGap.Render(strings.Repeat(" ", max(0, m.Viewport.Width-lipgloss.Width(row))))
-// 	row = lipgloss.JoinHorizontal(lipgloss.Bottom, row, gap)
-//
-// 	return row
-// }
-//
-// func (m Model) footerView() string {
-// 	tuickly := status.Render("tuickly")
-// 	clock := statusTime.Render(time.Now().Format(time.TimeOnly))
-// 	tag := statusBar.Width(m.Viewport.Width - lipgloss.Width(tuickly) - lipgloss.Width(clock)).Render("@ealexandrohin")
-//
-// 	bar := lipgloss.JoinHorizontal(lipgloss.Top, tuickly, tag, clock)
-//
-// 	return bar
-// }
+func (m Model) headerView() string {
+	row := lipgloss.JoinHorizontal(
+		lipgloss.Center,
+		tabStyle.Render("Live"),
+		activeTabStyle.Render("Follows"),
+		tabStyle.Render("ealexandrohin"),
+	)
+
+	gap := tabGapStyle.Render(strings.Repeat(" ", max(0, m.Window.Width-lipgloss.Width(row))))
+	row = lipgloss.JoinHorizontal(lipgloss.Bottom, row, gap)
+
+	return row
+}
+
+func (m Model) footerView() string {
+	tuickly := statusStyle.Render("tuickly")
+	clock := statusTimeStyle.Render(time.Now().Format(time.TimeOnly))
+	tag := statusBarStyle.Width(m.Window.Width - lipgloss.Width(tuickly) - lipgloss.Width(clock)).Render("@ealexandrohin")
+
+	bar := lipgloss.JoinHorizontal(lipgloss.Top, tuickly, tag, clock)
+
+	return bar
+}

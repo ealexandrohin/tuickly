@@ -4,6 +4,7 @@ import (
 	"encoding/gob"
 	"os"
 	"path/filepath"
+	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
 	helix "github.com/nicklaw5/helix"
@@ -13,10 +14,10 @@ var (
 	client   *helix.Client
 	clientID = "cqyppegp5st5bk2tg1nglqfd5krd4l"
 	scopes   = []string{"user:read:follows", "user:read:subscriptions", "channel:read:subscriptions"}
-	// paths
+
 	homePath   string
-	configPath = filepath.Join(homePath, ".config", "tuickly")
-	authPath   = filepath.Join(configPath, "auth.gob")
+	configPath string
+	authPath   string
 )
 
 type Auth struct {
@@ -25,7 +26,10 @@ type Auth struct {
 	Opts *helix.Options
 }
 
-type AuthExistsMsg bool
+type (
+	AuthExistsMsg bool
+	AuthTickMsg   time.Time
+)
 
 type URIMsg struct {
 	URI        string
@@ -46,7 +50,28 @@ type TokenUserMsg struct {
 	Response *helix.UsersResponse
 }
 
-type AuthMsg bool
+type AuthMsg struct {
+	Auth Auth
+}
+
+func init() {
+	var err error
+
+	homePath, err = os.UserHomeDir()
+	if err != nil {
+		panic(err)
+	}
+
+	configPath = filepath.Join(homePath, ".config", "tuickly")
+	authPath = filepath.Join(configPath, "auth.gob")
+
+	client, err = helix.NewClient(&helix.Options{
+		ClientID: clientID,
+	})
+	if err != nil {
+		panic(err)
+	}
+}
 
 func checkAuth() tea.Cmd {
 	return func() tea.Msg {
@@ -58,37 +83,15 @@ func checkAuth() tea.Cmd {
 	}
 }
 
-func loadAuth(m Model) tea.Cmd {
-	return func() tea.Msg {
-		file, err := os.Open(authPath)
-		if err != nil {
-			panic(err)
-		}
-		defer file.Close()
-
-		var Auth Auth
-
-		d := gob.NewDecoder(file)
-		if err := d.Decode(&Auth); err != nil {
-			panic(err)
-		}
-
-		client, err = helix.NewClient(Auth.Opts)
-		if err != nil {
-			panic(err)
-		}
-
-		m.Auth = Auth
-
-		return AuthMsg(true)
-	}
-}
-
 func newAuth() tea.Cmd {
 	return func() tea.Msg {
 		r, err := client.RequestDeviceVerificationURI(scopes)
 		if err != nil {
-			panic(err)
+			return ErrorMsg{Err: err}
+		}
+
+		if r.ErrorMessage != "" {
+			return ErrorMsg{Msg: r.ErrorMessage}
 		}
 
 		return URIMsg{
@@ -99,11 +102,19 @@ func newAuth() tea.Cmd {
 	}
 }
 
-func newToken(m URIMsg) tea.Cmd {
+func newToken(m *URIMsg) tea.Cmd {
 	return func() tea.Msg {
 		r, err := client.RequestDeviceAccessToken(m.DeviceCode, scopes)
 		if err != nil {
-			panic(err)
+			return ErrorMsg{Err: err}
+		}
+
+		if r.ErrorMessage == "authorization_pending" {
+			return AuthTick()
+		}
+
+		if r.ErrorMessage != "" {
+			return ErrorMsg{Msg: r.ErrorMessage}
 		}
 
 		return TokenMsg{
@@ -114,14 +125,14 @@ func newToken(m URIMsg) tea.Cmd {
 	}
 }
 
-func checkToken(m TokenMsg) tea.Cmd {
+func checkToken(m *TokenMsg) tea.Cmd {
 	return func() tea.Msg {
 		client.SetDeviceAccessToken(m.Token)
 		client.SetRefreshToken(m.Refresh)
 
 		r, err := client.GetUsers(&helix.UsersParams{})
 		if err != nil {
-			panic(err)
+			return ErrorMsg{Err: err}
 		}
 
 		return TokenUserMsg{
@@ -133,7 +144,7 @@ func checkToken(m TokenMsg) tea.Cmd {
 	}
 }
 
-func saveAuth(m TokenUserMsg) tea.Cmd {
+func saveAuth(m *TokenUserMsg) tea.Cmd {
 	return func() tea.Msg {
 		auth := Auth{
 			Is:   true,
@@ -151,31 +162,39 @@ func saveAuth(m TokenUserMsg) tea.Cmd {
 
 		file, err := os.Create(authPath)
 		if err != nil {
-			panic(err)
+			return ErrorMsg{Err: err}
 		}
 		defer file.Close()
 
 		e := gob.NewEncoder(file)
 		if err := e.Encode(auth); err != nil {
-			panic(err)
+			return ErrorMsg{Err: err}
 		}
 
-		return AuthMsg(false)
+		return AuthMsg{auth}
 	}
 }
 
-func init() {
-	var err error
+func loadAuth() tea.Cmd {
+	return func() tea.Msg {
+		file, err := os.Open(authPath)
+		if err != nil {
+			return AuthExistsMsg(false)
+		}
+		defer file.Close()
 
-	homePath, err = os.UserHomeDir()
-	if err != nil {
-		panic(err)
-	}
+		var auth Auth
 
-	client, err = helix.NewClient(&helix.Options{
-		ClientID: clientID,
-	})
-	if err != nil {
-		panic(err)
+		d := gob.NewDecoder(file)
+		if err := d.Decode(&auth); err != nil {
+			return ErrorMsg{Err: err}
+		}
+
+		client, err = helix.NewClient(auth.Opts)
+		if err != nil {
+			return AuthExistsMsg(false)
+		}
+
+		return AuthMsg{auth}
 	}
 }
