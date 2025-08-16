@@ -20,7 +20,7 @@ var (
 	white = lipgloss.Color("#FFFFFF")
 
 	// colors
-	primary = purple
+	primary = pacman
 	text    = white
 
 	// spinner
@@ -66,7 +66,7 @@ var (
 	statusTimeStyle = statusStyle.Align(lipgloss.Right)
 
 	// dialog
-	dialogStyle = lipgloss.NewStyle().Border(lipgloss.NormalBorder()).BorderForeground(lipgloss.Color("#874BFD")).Padding(1, 0)
+	dialogStyle = lipgloss.NewStyle().Border(lipgloss.NormalBorder()).BorderForeground(lipgloss.Color(primary)).Padding(1, 0)
 )
 
 type Tab struct {
@@ -95,8 +95,8 @@ func URIDialog(m Model) string {
 func (m Model) headerView() string {
 	row := lipgloss.JoinHorizontal(
 		lipgloss.Center,
-		tabStyle.Render("Live"),
-		activeTabStyle.Render("Follows"),
+		activeTabStyle.Render("Live"),
+		tabStyle.Render("Follows"),
 		tabStyle.Render("ealexandrohin"),
 	)
 
@@ -104,6 +104,11 @@ func (m Model) headerView() string {
 	row = lipgloss.JoinHorizontal(lipgloss.Bottom, row, gap)
 
 	return row
+}
+
+func (m Model) contentView() string {
+	return ""
+	// return docStyle.Render(m.list.View())
 }
 
 func (m Model) footerView() string {

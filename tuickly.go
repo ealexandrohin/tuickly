@@ -6,7 +6,10 @@ import (
 	"os"
 	"time"
 
+	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
+	lst "github.com/eAlexandrohin/tuickly/list"
+	helix "github.com/nicklaw5/helix"
 )
 
 type Model struct {
@@ -19,7 +22,32 @@ type Model struct {
 	Tabs      []Tab
 	UI        UI
 	Window    Window
+	List      lst.Model
 	// View      string
+}
+
+type ErrorMsg struct {
+	Msg string
+	Err error
+}
+
+func (e ErrorMsg) Error() string {
+	if e.Err != nil {
+		return e.Err.Error()
+	}
+	return e.Msg
+}
+
+type StreamItem struct {
+	Stream helix.Stream
+}
+
+// func (s StreamItem) Title() string {
+// 	return s.Stream.UserName
+// }
+
+func (s StreamItem) FilterValue() string {
+	return s.Stream.UserName
 }
 
 func initialModel() Model {
@@ -44,24 +72,6 @@ func initialModel() Model {
 			},
 		},
 	}
-}
-
-type ErrorMsg struct {
-	Msg string
-	Err error
-}
-
-func (e ErrorMsg) Error() string {
-	if e.Err != nil {
-		return e.Err.Error()
-	}
-	return e.Msg
-}
-
-func AuthTick() tea.Cmd {
-	return tea.Tick(5*time.Second, func(t time.Time) tea.Msg {
-		return AuthTickMsg(t)
-	})
 }
 
 func (m Model) Init() tea.Cmd {
@@ -99,11 +109,24 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case AuthMsg:
 		m.Auth = msg.Auth
 
-		return m, start(&m)
-	case ContentMsg:
-		m.Content += string(msg) + "\n"
+		return m, Live(&m)
+	case LiveMsg:
+		m.List = lst.Model{
+			List: list.New(lst.Items, list.NewDefaultDelegate(), 0, 0),
+			H:    m.Window.Height,
+			W:    m.Window.Width,
+		}
+		// items := make([]list.Item, len(msg))
+		//
+		// for i, s := range msg {
+		// 	items[i] = StreamItem{s}
+		// }
+		//
+		// m.List = lst.Model{List: list.New(items, list.NewDefaultDelegate(), 0, 0)}
 
-		return m, nil
+		// m.List = lst.Model{List: list.New(msg, list.NewDefaultDelegate(), 0, 0)}
+
+		// return m, nil
 	case tea.KeyMsg:
 		if k := msg.String(); k == "ctrl+c" || k == "q" || k == "esc" {
 			return m, tea.Quit
@@ -128,8 +151,8 @@ func (m Model) View() string {
 			return URIDialog(m)
 		}
 	}
-	return fmt.Sprintf("%s\n%s\n%s", m.headerView(), m.Content, m.footerView())
-	// return m.Content
+
+	return fmt.Sprintf("%s\n%s\n%s", m.headerView(), m.List.View(), m.footerView())
 }
 
 func main() {

@@ -1,15 +1,13 @@
 package main
 
 import (
-	"fmt"
-
 	tea "github.com/charmbracelet/bubbletea"
 	helix "github.com/nicklaw5/helix"
 )
 
-type ContentMsg string
+type LiveMsg []helix.Stream
 
-func start(m *Model) tea.Cmd {
+func Live(m *Model) tea.Cmd {
 	return func() tea.Msg {
 		live, err := paginate(func(after string) ([]helix.Stream, string, error) {
 			params := &helix.FollowedStreamsParams{
@@ -26,17 +24,9 @@ func start(m *Model) tea.Cmd {
 			return resp.Data.Streams, resp.Data.Pagination.Cursor, nil
 		})
 		if err != nil {
-			panic(err)
+			return ErrorMsg{Err: err}
 		}
 
-		var s string
-
-		s += fmt.Sprintf("len: %v\n", len(live))
-
-		// for _, stream := range live {
-		// 	s += fmt.Sprintf("%v %v\n", stream.UserName, stream.ViewerCount)
-		// }
-
-		return ContentMsg(s)
+		return LiveMsg(live)
 	}
 }

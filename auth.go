@@ -73,6 +73,12 @@ func init() {
 	}
 }
 
+func AuthTick() tea.Cmd {
+	return tea.Tick(5*time.Second, func(t time.Time) tea.Msg {
+		return AuthTickMsg(t)
+	})
+}
+
 func checkAuth() tea.Cmd {
 	return func() tea.Msg {
 		if _, err := os.Stat(authPath); os.IsNotExist(err) {
