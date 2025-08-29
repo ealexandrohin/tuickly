@@ -3,167 +3,121 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"os"
-	"time"
 
-	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
-	lst "github.com/eAlexandrohin/tuickly/list"
-	helix "github.com/nicklaw5/helix"
+	"github.com/eAlexandrohin/tuickly/auth"
+	"github.com/eAlexandrohin/tuickly/errs"
+	"github.com/eAlexandrohin/tuickly/ui"
+	"github.com/eAlexandrohin/tuickly/ux"
 )
 
 type Model struct {
-	ActiveTab int
-	Auth      Auth
-	AuthTick  time.Time
-	Content   string
-	ErrorMsg  ErrorMsg
-	Msg       tea.Msg
-	Tabs      []Tab
-	UI        UI
-	Window    Window
-	List      lst.Model
-	// View      string
+	Auth     *auth.Auth
+	AuthMdl  *auth.Model
+	ErrorMsg errs.ErrorMsg
+	UI       *ui.Model
+	UX       *ux.UX
 }
 
-type ErrorMsg struct {
-	Msg string
-	Err error
-}
+func initialModel() *Model {
+	a := &auth.Auth{}
 
-func (e ErrorMsg) Error() string {
-	if e.Err != nil {
-		return e.Err.Error()
+	return &Model{
+		AuthMdl: auth.New(),
+		Auth:    a,
+		UI:      ui.New(a),
+		// UX:      &ux.UX{},
 	}
-	return e.Msg
-}
 
-type StreamItem struct {
-	Stream helix.Stream
-}
-
-// func (s StreamItem) Title() string {
-// 	return s.Stream.UserName
-// }
-
-func (s StreamItem) FilterValue() string {
-	return s.Stream.UserName
-}
-
-func initialModel() Model {
-	return Model{
-		AuthTick: time.Now(),
-		Tabs: []Tab{
-			{
-				Title:   "Live",
-				Content: "Live",
-			},
-			{
-				Title:   "Follows",
-				Content: "Follows",
-			},
-			{
-				Title:   "ealexandrohin",
-				Content: "ealexandrohin",
-			},
-			{
-				Title:   "About",
-				Content: "About",
-			},
-		},
-	}
+	// m := &Model{}
+	//
+	// m.AuthMdl = auth.New()
+	// m.Auth = &auth.Auth{}
+	// m.UI = ui.New()
+	// m.UX = &ux.UX{}
+	//
+	// return m
 }
 
 func (m Model) Init() tea.Cmd {
-	return checkAuth()
+	return m.AuthMdl.Init()
 }
 
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
-	case AuthExistsMsg:
-		if !msg {
-			return m, newAuth()
-		}
-
-		return m, loadAuth()
-	case URIMsg:
-		m.Msg = msg
-
-		return m, AuthTick()
-	case AuthTickMsg:
-		var cmds []tea.Cmd
-
-		if uriMsg, ok := m.Msg.(URIMsg); ok {
-			cmds = append(cmds, newToken(&uriMsg))
-		}
-
-		cmds = append(cmds, AuthTick())
-
-		return m, tea.Batch(cmds...)
-	case TokenMsg:
-		m.Msg = nil
-
-		return m, checkToken(&msg)
-	case TokenUserMsg:
-		return m, saveAuth(&msg)
-	case AuthMsg:
-		m.Auth = msg.Auth
-
-		return m, Live(&m)
-	case LiveMsg:
-		m.List = lst.Model{
-			List: list.New(lst.Items, list.NewDefaultDelegate(), 0, 0),
-			H:    m.Window.Height,
-			W:    m.Window.Width,
-		}
-		// items := make([]list.Item, len(msg))
-		//
-		// for i, s := range msg {
-		// 	items[i] = StreamItem{s}
-		// }
-		//
-		// m.List = lst.Model{List: list.New(items, list.NewDefaultDelegate(), 0, 0)}
-
-		// m.List = lst.Model{List: list.New(msg, list.NewDefaultDelegate(), 0, 0)}
-
-		// return m, nil
 	case tea.KeyMsg:
 		if k := msg.String(); k == "ctrl+c" || k == "q" || k == "esc" {
+			log.Println("quit")
 			return m, tea.Quit
 		}
 	case tea.WindowSizeMsg:
-		m.Window.Width = msg.Width
-		m.Window.Height = msg.Height
-	case ErrorMsg:
+		m.UI.Window.Width = msg.Width
+		m.UI.Window.Height = msg.Height
+	case auth.AuthMsg:
+		log.Println("before", m.Auth)
+
+		m.Auth = msg.Auth
+
+		log.Println("after", m.Auth)
+	case errs.ErrorMsg:
 		m.ErrorMsg = msg
 	}
 
-	return m, nil
+	if !m.Auth.Is {
+		mdl, cmd := m.AuthMdl.Update(msg)
+		m.AuthMdl = &mdl
+
+		return m, cmd
+	}
+
+	mdl, cmd := m.UI.Update(msg)
+	m.UI = &mdl
+
+	return m, cmd
+
+	// if m.Content.Loaded {
+	// 	var cmd tea.Cmd
+	// 	m.UX.List, cmd = m.UX.List.Update(msg)
+	//
+	// 	return m, cmd
+	// }
+
+	// return m, nil
 }
 
 func (m Model) View() string {
-	if m.ErrorMsg != (ErrorMsg{}) {
+	if m.ErrorMsg != (errs.ErrorMsg{}) {
 		return m.ErrorMsg.Error()
 	}
 
 	if !m.Auth.Is {
-		if _, ok := m.Msg.(URIMsg); ok {
-			return URIDialog(m)
-		}
+		return m.AuthMdl.View()
 	}
 
-	return fmt.Sprintf("%s\n%s\n%s", m.headerView(), m.List.View(), m.footerView())
+	return m.UI.View()
 }
 
 func main() {
-	p := tea.NewProgram(
-		initialModel(),
+	if len(os.Getenv("DEBUG")) > 0 {
+		f, err := tea.LogToFile("debug.log", "debug")
+		if err != nil {
+			fmt.Println("fatal:", err)
+			os.Exit(1)
+		}
+		defer f.Close()
+
+		log.SetOutput(f)
+	}
+
+	p := tea.NewProgram(initialModel(),
 		tea.WithAltScreen(),
-		tea.WithMouseAllMotion(),
+		// tea.WithMouseCellMotion(),
 	)
 
 	if _, err := p.Run(); err != nil {
-		fmt.Println("err:", err)
+		fmt.Println(err)
 		os.Exit(1)
 	}
 }

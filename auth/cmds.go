@@ -1,34 +1,22 @@
-package main
+package auth
 
 import (
 	"encoding/gob"
+	"log"
 	"os"
 	"path/filepath"
 	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/eAlexandrohin/tuickly/errs"
+	"github.com/eAlexandrohin/tuickly/vars"
 	helix "github.com/nicklaw5/helix"
 )
 
-var (
-	client   *helix.Client
-	clientID = "cqyppegp5st5bk2tg1nglqfd5krd4l"
-	scopes   = []string{"user:read:follows", "user:read:subscriptions", "channel:read:subscriptions"}
-
-	homePath   string
-	configPath string
-	authPath   string
-)
-
-type Auth struct {
-	Is   bool
-	User *helix.User
-	Opts *helix.Options
-}
-
 type (
-	AuthExistsMsg bool
-	AuthTickMsg   time.Time
+	AuthExistsMsg   bool
+	AuthTickMsg     time.Time
+	ContinueTickMsg bool
 )
 
 type URIMsg struct {
@@ -46,58 +34,35 @@ type TokenMsg struct {
 type TokenUserMsg struct {
 	Token    string
 	Refresh  string
-	User     helix.User
+	User     *helix.User
 	Response *helix.UsersResponse
 }
 
 type AuthMsg struct {
-	Auth Auth
-}
-
-func init() {
-	var err error
-
-	homePath, err = os.UserHomeDir()
-	if err != nil {
-		panic(err)
-	}
-
-	configPath = filepath.Join(homePath, ".config", "tuickly")
-	authPath = filepath.Join(configPath, "auth.gob")
-
-	client, err = helix.NewClient(&helix.Options{
-		ClientID: clientID,
-	})
-	if err != nil {
-		panic(err)
-	}
-}
-
-func AuthTick() tea.Cmd {
-	return tea.Tick(5*time.Second, func(t time.Time) tea.Msg {
-		return AuthTickMsg(t)
-	})
+	Auth *Auth
 }
 
 func checkAuth() tea.Cmd {
 	return func() tea.Msg {
-		if _, err := os.Stat(authPath); os.IsNotExist(err) {
+		if _, err := os.Stat(vars.AuthPath); os.IsNotExist(err) {
+			log.Println("auth doesnt exist")
 			return AuthExistsMsg(false)
 		}
 
+		log.Println("auth exists")
 		return AuthExistsMsg(true)
 	}
 }
 
 func newAuth() tea.Cmd {
 	return func() tea.Msg {
-		r, err := client.RequestDeviceVerificationURI(scopes)
+		r, err := vars.Client.RequestDeviceVerificationURI(vars.Scopes)
 		if err != nil {
-			return ErrorMsg{Err: err}
+			return errs.ErrorMsg{Err: err}
 		}
 
 		if r.ErrorMessage != "" {
-			return ErrorMsg{Msg: r.ErrorMessage}
+			return errs.ErrorMsg{Msg: r.ErrorMessage}
 		}
 
 		return URIMsg{
@@ -108,20 +73,30 @@ func newAuth() tea.Cmd {
 	}
 }
 
+func AuthTick() tea.Cmd {
+	return tea.Tick(5*time.Second, func(t time.Time) tea.Msg {
+		log.Println("AuthTick")
+		return AuthTickMsg(t)
+	})
+}
+
 func newToken(m *URIMsg) tea.Cmd {
 	return func() tea.Msg {
-		r, err := client.RequestDeviceAccessToken(m.DeviceCode, scopes)
+		r, err := vars.Client.RequestDeviceAccessToken(m.DeviceCode, vars.Scopes)
 		if err != nil {
-			return ErrorMsg{Err: err}
+			return errs.ErrorMsg{Err: err}
 		}
 
 		if r.ErrorMessage == "authorization_pending" {
-			return AuthTick()
+			return ContinueTickMsg(true)
+			// return AuthTick()
 		}
 
 		if r.ErrorMessage != "" {
-			return ErrorMsg{Msg: r.ErrorMessage}
+			return errs.ErrorMsg{Msg: r.ErrorMessage}
 		}
+
+		log.Println("auth", r.Data.AccessToken, r.Data.RefreshToken)
 
 		return TokenMsg{
 			Token:    r.Data.AccessToken,
@@ -133,18 +108,18 @@ func newToken(m *URIMsg) tea.Cmd {
 
 func checkToken(m *TokenMsg) tea.Cmd {
 	return func() tea.Msg {
-		client.SetDeviceAccessToken(m.Token)
-		client.SetRefreshToken(m.Refresh)
+		vars.Client.SetDeviceAccessToken(m.Token)
+		vars.Client.SetRefreshToken(m.Refresh)
 
-		r, err := client.GetUsers(&helix.UsersParams{})
+		r, err := vars.Client.GetUsers(&helix.UsersParams{})
 		if err != nil {
-			return ErrorMsg{Err: err}
+			return errs.ErrorMsg{Err: err}
 		}
 
 		return TokenUserMsg{
 			Token:    m.Token,
 			Refresh:  m.Refresh,
-			User:     r.Data.Users[0],
+			User:     &r.Data.Users[0],
 			Response: r,
 		}
 	}
@@ -154,36 +129,36 @@ func saveAuth(m *TokenUserMsg) tea.Cmd {
 	return func() tea.Msg {
 		auth := Auth{
 			Is:   true,
-			User: &m.User,
+			User: m.User,
 			Opts: &helix.Options{
-				ClientID:          clientID,
+				ClientID:          vars.ClientID,
 				DeviceAccessToken: m.Token,
 				RefreshToken:      m.Refresh,
 			},
 		}
 
-		if _, err := os.Stat(configPath); os.IsNotExist(err) {
-			os.MkdirAll(filepath.Join(configPath), os.ModePerm)
+		if _, err := os.Stat(vars.ConfigPath); os.IsNotExist(err) {
+			os.MkdirAll(filepath.Join(vars.ConfigPath), os.ModePerm)
 		}
 
-		file, err := os.Create(authPath)
+		file, err := os.Create(vars.AuthPath)
 		if err != nil {
-			return ErrorMsg{Err: err}
+			return errs.ErrorMsg{Err: err}
 		}
 		defer file.Close()
 
 		e := gob.NewEncoder(file)
 		if err := e.Encode(auth); err != nil {
-			return ErrorMsg{Err: err}
+			return errs.ErrorMsg{Err: err}
 		}
 
-		return AuthMsg{auth}
+		return AuthMsg{&auth}
 	}
 }
 
 func loadAuth() tea.Cmd {
 	return func() tea.Msg {
-		file, err := os.Open(authPath)
+		file, err := os.Open(vars.AuthPath)
 		if err != nil {
 			return AuthExistsMsg(false)
 		}
@@ -193,14 +168,14 @@ func loadAuth() tea.Cmd {
 
 		d := gob.NewDecoder(file)
 		if err := d.Decode(&auth); err != nil {
-			return ErrorMsg{Err: err}
+			return errs.ErrorMsg{Err: err}
 		}
 
-		client, err = helix.NewClient(auth.Opts)
+		vars.Client, err = helix.NewClient(auth.Opts)
 		if err != nil {
 			return AuthExistsMsg(false)
 		}
 
-		return AuthMsg{auth}
+		return AuthMsg{&auth}
 	}
 }

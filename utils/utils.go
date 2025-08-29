@@ -1,18 +1,19 @@
-package main
+package utils
 
 import (
+	"github.com/charmbracelet/bubbles/list"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/lucasb-eyer/go-colorful"
 )
 
-func max(a, b int) int {
-	if a > b {
-		return a
-	}
-	return b
-}
+// func Max(a, b int) int {
+// 	if a > b {
+// 		return a
+// 	}
+// 	return b
+// }
 
-func gradient(base lipgloss.Style, s string) string {
+func Gradient(base lipgloss.Style, s string) string {
 	startColor, _ := colorful.Hex("#ffbf00")
 	endColor, _ := colorful.Hex("#9146ff")
 	n := len([]rune(s))
@@ -25,7 +26,7 @@ func gradient(base lipgloss.Style, s string) string {
 	return str
 }
 
-func paginate[T any](
+func Paginate[T any](
 	request func(after string) ([]T, string, error),
 ) ([]T, error) {
 	var (
@@ -47,4 +48,14 @@ func paginate[T any](
 	}
 
 	return all, nil
+}
+
+func ConvertToItems[S any](sourceSlice []S, mapper func(item S) list.Item) []list.Item {
+	items := make([]list.Item, len(sourceSlice))
+
+	for i, s := range sourceSlice {
+		items[i] = mapper(s)
+	}
+
+	return items
 }
