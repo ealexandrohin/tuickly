@@ -8,6 +8,7 @@ import (
 	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/eAlexandrohin/tuickly/ctx"
 	"github.com/eAlexandrohin/tuickly/errs"
 	"github.com/eAlexandrohin/tuickly/vars"
 	helix "github.com/nicklaw5/helix"
@@ -34,12 +35,12 @@ type TokenMsg struct {
 type TokenUserMsg struct {
 	Token    string
 	Refresh  string
-	User     *helix.User
+	User     helix.User
 	Response *helix.UsersResponse
 }
 
 type AuthMsg struct {
-	Auth *Auth
+	Auth ctx.Auth
 }
 
 func checkAuth() tea.Cmd {
@@ -80,7 +81,7 @@ func AuthTick() tea.Cmd {
 	})
 }
 
-func newToken(m *URIMsg) tea.Cmd {
+func newToken(m URIMsg) tea.Cmd {
 	return func() tea.Msg {
 		r, err := vars.Client.RequestDeviceAccessToken(m.DeviceCode, vars.Scopes)
 		if err != nil {
@@ -119,7 +120,7 @@ func checkToken(m *TokenMsg) tea.Cmd {
 		return TokenUserMsg{
 			Token:    m.Token,
 			Refresh:  m.Refresh,
-			User:     &r.Data.Users[0],
+			User:     r.Data.Users[0],
 			Response: r,
 		}
 	}
@@ -127,10 +128,10 @@ func checkToken(m *TokenMsg) tea.Cmd {
 
 func saveAuth(m *TokenUserMsg) tea.Cmd {
 	return func() tea.Msg {
-		auth := Auth{
+		auth := ctx.Auth{
 			Is:   true,
 			User: m.User,
-			Opts: &helix.Options{
+			Opts: helix.Options{
 				ClientID:          vars.ClientID,
 				DeviceAccessToken: m.Token,
 				RefreshToken:      m.Refresh,
@@ -152,7 +153,7 @@ func saveAuth(m *TokenUserMsg) tea.Cmd {
 			return errs.ErrorMsg{Err: err}
 		}
 
-		return AuthMsg{&auth}
+		return AuthMsg{auth}
 	}
 }
 
@@ -164,18 +165,18 @@ func loadAuth() tea.Cmd {
 		}
 		defer file.Close()
 
-		var auth Auth
+		var auth ctx.Auth
 
 		d := gob.NewDecoder(file)
 		if err := d.Decode(&auth); err != nil {
 			return errs.ErrorMsg{Err: err}
 		}
 
-		vars.Client, err = helix.NewClient(auth.Opts)
+		vars.Client, err = helix.NewClient(&auth.Opts)
 		if err != nil {
 			return AuthExistsMsg(false)
 		}
 
-		return AuthMsg{&auth}
+		return AuthMsg{auth}
 	}
 }

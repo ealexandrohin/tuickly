@@ -4,22 +4,16 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
-var dialogStyle = lipgloss.NewStyle().
-	Border(lipgloss.ThickBorder()).
-	BorderForeground(lipgloss.Color("ffbf00")).
-	Padding(1, 0)
-
 func (m Model) AuthDialog() string {
-	URI := lipgloss.NewStyle().
+	URI := m.Ctx.Styles.Auth.URI.Style.
 		Width(len(m.URIMsg.URI) + 4).
-		Align(lipgloss.Center).
 		Render(m.URIMsg.URI)
 
 	return lipgloss.Place(
-		m.Width,
-		m.Height,
+		m.Ctx.Window.Width,
+		m.Ctx.Window.Height,
 		lipgloss.Center,
 		lipgloss.Center,
-		dialogStyle.Render(URI),
+		m.Ctx.Styles.Auth.Dialog.Style.Render(URI),
 	)
 }

@@ -10,11 +10,12 @@ type Colors struct {
 }
 
 var (
-	// twitch colors
+	// official twitch branding colors
 	purple = lipgloss.Color("#9146FF") // twitch primary
 	black  = lipgloss.Color("#000000") // twitch black ops
 	ice    = lipgloss.Color("#F0F0FF") // twitch ice
 
+	// twitch colors
 	pacman = lipgloss.Color("#FFBF00") // twitch pacman
 
 	// base colors
@@ -24,8 +25,8 @@ var (
 	blue  = lipgloss.Color("#0000FF")
 )
 
-func New() *Colors {
-	return &Colors{
+func New() Colors {
+	return Colors{
 		Important: red,
 		Primary:   pacman,
 		Text:      white,

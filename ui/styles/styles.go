@@ -10,7 +10,18 @@ import (
 // Background(lipgloss.Color("#353533")).
 
 type Styles struct {
-	Colors *colors.Colors
+	Colors colors.Colors
+
+	Auth struct {
+		Dialog struct {
+			Style  lipgloss.Style
+			Border lipgloss.Border
+		}
+
+		URI struct {
+			Style lipgloss.Style
+		}
+	}
 
 	Tab struct {
 		Style  lipgloss.Style
@@ -33,43 +44,60 @@ type Styles struct {
 		Right lipgloss.Style
 	}
 
-	List struct {
+	StreamList struct {
 		Normal struct {
-			Style       lipgloss.Style
-			UserName    lipgloss.Style
-			GameName    lipgloss.Style
-			Uptime      lipgloss.Style
-			ViewerCount lipgloss.Style
-			Title       lipgloss.Style
+			Style  lipgloss.Style
+			Border lipgloss.Border
+
+			Top struct {
+				Style lipgloss.Style
+			}
+
+			Bottom struct {
+				Left   lipgloss.Style
+				Middle lipgloss.Style
+				Right  lipgloss.Style
+			}
 		}
 
 		Selected struct {
-			Style       lipgloss.Style
-			UserName    lipgloss.Style
-			GameName    lipgloss.Style
-			Uptime      lipgloss.Style
-			ViewerCount lipgloss.Style
-			Title       lipgloss.Style
-		}
+			Style  lipgloss.Style
+			Border lipgloss.Border
 
-		Dimmed struct {
-			Style       lipgloss.Style
-			UserName    lipgloss.Style
-			GameName    lipgloss.Style
-			Uptime      lipgloss.Style
-			ViewerCount lipgloss.Style
-			Title       lipgloss.Style
-		}
+			Top struct {
+				Style lipgloss.Style
+			}
 
-		FilterMatch lipgloss.Style
+			Bottom struct {
+				Left   lipgloss.Style
+				Middle lipgloss.Style
+				Right  lipgloss.Style
+			}
+		}
 	}
 }
 
-func New() *Styles {
-	s := Styles{}
-	s.Colors = colors.New()
+func New() Styles {
+	s := Styles{
+		Colors: colors.New(),
+	}
 
-	// tabs borders
+	// auth dialog
+
+	s.Auth.Dialog.Border = lipgloss.ThickBorder()
+
+	s.Auth.Dialog.Style = lipgloss.NewStyle().
+		Border(s.Auth.Dialog.Border).
+		BorderForeground(s.Colors.Primary).
+		Padding(1, 0)
+
+	// auth uri
+
+	s.Auth.URI.Style = lipgloss.NewStyle().
+		Foreground(s.Colors.Text).
+		Align(lipgloss.Center)
+
+	// tab normal
 
 	s.Tab.Border = lipgloss.Border{
 		Top:         "─",
@@ -82,6 +110,13 @@ func New() *Styles {
 		BottomRight: "┷",
 	}
 
+	s.Tab.Style = lipgloss.NewStyle().
+		Border(s.Tab.Border).
+		BorderForeground(s.Colors.Primary).
+		Padding(0, 1)
+
+	// tab active
+
 	s.Tab.Active.Border = lipgloss.Border{
 		Top:         "━",
 		Bottom:      " ",
@@ -93,20 +128,15 @@ func New() *Styles {
 		BottomRight: "┗",
 	}
 
+	s.Tab.Active.Style = s.Tab.Style.Border(s.Tab.Active.Border)
+
+	// tab gap
+
 	s.Tab.Gap.Border = lipgloss.Border{
 		Bottom:      "━",
 		BottomLeft:  "━",
 		BottomRight: "━",
 	}
-
-	// tabs
-
-	s.Tab.Style = lipgloss.NewStyle().
-		Border(s.Tab.Border).
-		BorderForeground(s.Colors.Primary).
-		Padding(0, 1)
-
-	s.Tab.Active.Style = s.Tab.Style.Border(s.Tab.Active.Border)
 
 	s.Tab.Gap.Style = lipgloss.NewStyle().
 		Border(s.Tab.Gap.Border).
@@ -127,71 +157,58 @@ func New() *Styles {
 
 	s.Status.Right = s.Status.Left.Align(lipgloss.Right)
 
-	// list
-	// normal
+	// streamlist normal
 
-	s.List.Normal.Style = lipgloss.NewStyle().
+	s.StreamList.Normal.Style = lipgloss.NewStyle().
 		Foreground(s.Colors.Text)
 
-	s.List.Normal.UserName = s.List.Normal.Style.
-		Background(s.Colors.Twitch).
-		Padding(0, 0, 0, 2)
+	s.StreamList.Normal.Top.Style = s.StreamList.Normal.Style.
+		Width(40)
 
-	s.List.Normal.GameName = s.List.Normal.Style
+	s.StreamList.Normal.Bottom.Left = s.StreamList.Normal.Style.
+		Align(lipgloss.Left).
+		Foreground(s.Colors.Twitch).
+		Bold(true)
 
-	s.List.Normal.Uptime = s.List.Normal.Style
+	s.StreamList.Normal.Bottom.Middle = s.StreamList.Normal.Style.
+		Align(lipgloss.Center)
 
-	s.List.Normal.ViewerCount = s.List.Normal.Style.
-		Background(s.Colors.Important) // Classic
+	s.StreamList.Normal.Bottom.Right = s.StreamList.Normal.Style.
+		Align(lipgloss.Right).
+		Foreground(s.Colors.Important).
+		Bold(true)
 
-	s.List.Normal.Title = s.List.Normal.Style.
-		Padding(0, 0, 0, 2)
+	// streamlist selected
 
-	// selected
+	s.StreamList.Selected.Border = lipgloss.Border{
+		Top:      "▄",
+		Left:     "█",
+		Right:    "█",
+		TopLeft:  "▄",
+		TopRight: "▄",
+	}
 
-	s.List.Selected.Style = lipgloss.NewStyle().
-		Foreground(s.Colors.Text).
+	s.StreamList.Selected.Style = s.StreamList.Normal.Style.
 		Background(s.Colors.Primary)
 
-	s.List.Selected.UserName = s.List.Selected.Style.
-		Border(lipgloss.NormalBorder(), false, false, false, true).
-		BorderForeground(s.Colors.Primary).
+	s.StreamList.Selected.Top.Style = s.StreamList.Selected.Style.
+		Width(40)
+
+	s.StreamList.Selected.Bottom.Left = s.StreamList.Selected.Style.
+		Align(lipgloss.Left).
 		Foreground(s.Colors.Twitch).
-		Background(s.Colors.Primary).
-		Padding(0, 0, 0, 1)
+		Bold(true)
 
-	s.List.Selected.GameName = s.List.Selected.Style
+	s.StreamList.Selected.Bottom.Middle = s.StreamList.Selected.Style.
+		Align(lipgloss.Center)
 
-	s.List.Selected.Uptime = s.List.Selected.Style
+	s.StreamList.Selected.Bottom.Right = s.StreamList.Selected.Style.
+		Align(lipgloss.Right).
+		Foreground(s.Colors.Important).
+		Bold(true)
 
-	s.List.Selected.ViewerCount = s.List.Selected.Style.
-		Foreground(s.Colors.Important)
+	// s.StreamList.Selected.Style = s.StreamList.Selected.Style.
+	// 	Border(s.StreamList.Selected.Border)
 
-	s.List.Selected.Title = s.List.Selected.Style.
-		Padding(0, 0, 0, 1)
-
-	// dimmed
-
-	s.List.Dimmed.Style = lipgloss.NewStyle().
-		Foreground(s.Colors.Text).
-		Faint(true)
-
-	s.List.Dimmed.UserName = s.List.Dimmed.Style.
-		Background(s.Colors.Twitch).
-		Padding(0, 0, 0, 2)
-
-	s.List.Dimmed.GameName = s.List.Dimmed.Style
-
-	s.List.Dimmed.Uptime = s.List.Dimmed.Style
-
-	s.List.Dimmed.ViewerCount = s.List.Dimmed.Style.
-		Background(s.Colors.Important)
-
-	s.List.Dimmed.Title = s.List.Dimmed.Style.
-		Padding(0, 0, 0, 2)
-
-	s.List.FilterMatch = s.List.Selected.Style
-	// s.List.FilterMatch = lipgloss.NewStyle().Underline(true)
-
-	return &s
+	return s
 }

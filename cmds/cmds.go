@@ -1,28 +1,23 @@
 package cmds
 
 import (
-	"log"
-
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/eAlexandrohin/tuickly/auth"
+	"github.com/eAlexandrohin/tuickly/ctx"
 	"github.com/eAlexandrohin/tuickly/errs"
 	"github.com/eAlexandrohin/tuickly/utils"
-	"github.com/eAlexandrohin/tuickly/ux"
+	"github.com/eAlexandrohin/tuickly/ux/streamlist"
 	"github.com/eAlexandrohin/tuickly/vars"
 	helix "github.com/nicklaw5/helix"
 )
 
 type LiveMsg []list.Item
 
-func Live(a *auth.Auth) tea.Cmd {
-	log.Println("cmd live outside")
+func Live(ctx *ctx.Ctx) tea.Cmd {
 	return func() tea.Msg {
-		log.Println("cmd live inside")
-
 		live, err := utils.Paginate(func(after string) ([]helix.Stream, string, error) {
 			params := &helix.FollowedStreamsParams{
-				UserID: a.User.ID,
+				UserID: ctx.Auth.User.ID,
 				First:  100,
 				After:  after,
 			}
@@ -38,10 +33,10 @@ func Live(a *auth.Auth) tea.Cmd {
 			return errs.ErrorMsg{Err: err}
 		}
 
-		log.Println(live)
+		// log.Println(live)
 
 		streamItems := utils.ConvertToItems(live, func(s helix.Stream) list.Item {
-			return ux.StreamItem{
+			return streamlist.Item{
 				UserID:      s.UserID,
 				UserLogin:   s.UserLogin,
 				UserName:    s.UserName,
