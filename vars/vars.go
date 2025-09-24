@@ -4,14 +4,16 @@ import (
 	"os"
 	"path/filepath"
 
+	tea "github.com/charmbracelet/bubbletea"
 	helix "github.com/nicklaw5/helix"
 )
 
 const ClientID = "cqyppegp5st5bk2tg1nglqfd5krd4l"
 
 var (
-	Client *helix.Client
-	Scopes = []string{"user:read:follows", "user:read:subscriptions", "channel:read:subscriptions"}
+	Program *tea.Program
+	Client  *helix.Client
+	Scopes  = []string{"user:read:follows", "user:read:subscriptions", "channel:read:subscriptions"}
 
 	HomePath   string
 	ConfigPath string
@@ -35,4 +37,8 @@ func init() {
 	if err != nil {
 		panic(err)
 	}
+
+	Client.OnUserAccessTokenRefreshed(func(newAccessToken string, newRefreshToken string) {
+		// Program.Send(TokenMsg{})
+	})
 }

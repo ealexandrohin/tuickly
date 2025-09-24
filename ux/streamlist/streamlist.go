@@ -60,6 +60,10 @@ func (d Delegate) Height() int {
 	return 14
 }
 
+func (d Delegate) Width() int {
+	return 40
+}
+
 // func (d StreamDelegate) SetSpacing(s int) {
 // 	d.spacing = s
 // }
@@ -73,37 +77,34 @@ func (d Delegate) Update(msg tea.Msg, m *list.Model) tea.Cmd {
 	return nil
 }
 
+// Render renders the item's view.
 func (d Delegate) Render(w io.Writer, m list.Model, index int, item list.Item) {
 	if m.Width() <= 0 {
 		return
 	}
 
-	// log.Printf("%+v", m)
-
 	var (
-		userName string
-		gameName string
-		// uptime      string
+		userName    string
+		gameName    string
 		viewerCount string
 		title       string
 		s           = &d.Ctx.Styles
 	)
 
-	if i, ok := item.(Item); ok {
-		userName = i.UserName
-		gameName = ansi.Truncate(i.GameName, 16, "...")
-
-		viewerCount = strconv.Itoa(i.ViewerCount)
-		title = ansi.Truncate(i.Title, 40, "...")
-	} else {
+	i, ok := item.(Item)
+	if !ok {
 		return
 	}
+
+	userName = i.UserName
+	gameName = ansi.Truncate(i.GameName, 16, "...")
+	viewerCount = strconv.Itoa(i.ViewerCount)
+	title = ansi.Truncate(i.Title, 40, "...")
 
 	isSelected := index == m.Index()
 
 	var (
-		topRow string
-
+		topRow      string
 		bottomLeft  string
 		bottomRight string
 		bottomRow   string
@@ -111,10 +112,8 @@ func (d Delegate) Render(w io.Writer, m list.Model, index int, item list.Item) {
 
 	if isSelected {
 		topRow = s.StreamList.Selected.Top.Style.Render(title)
-
 		bottomLeft = s.StreamList.Selected.Bottom.Left.Render(userName)
 		bottomRight = s.StreamList.Selected.Bottom.Right.Render(viewerCount)
-
 		bottomRow = lipgloss.JoinHorizontal(lipgloss.Left,
 			bottomLeft,
 			s.StreamList.Selected.Bottom.Middle.Width(40-lipgloss.Width(bottomLeft)-lipgloss.Width(bottomRight)).Render(gameName),
@@ -122,10 +121,8 @@ func (d Delegate) Render(w io.Writer, m list.Model, index int, item list.Item) {
 		)
 	} else {
 		topRow = s.StreamList.Normal.Top.Style.Render(title)
-
 		bottomLeft = s.StreamList.Normal.Bottom.Left.Render(userName)
 		bottomRight = s.StreamList.Normal.Bottom.Right.Render(viewerCount)
-
 		bottomRow = lipgloss.JoinHorizontal(lipgloss.Left,
 			bottomLeft,
 			s.StreamList.Normal.Bottom.Middle.Width(40-lipgloss.Width(bottomLeft)-lipgloss.Width(bottomRight)).Render(gameName),
@@ -133,20 +130,17 @@ func (d Delegate) Render(w io.Writer, m list.Model, index int, item list.Item) {
 		)
 	}
 
-	img, err := getDecodedImg("/home/alex/Downloads/1920-x-1080-hd-1qq8r4pnn8cmcew4.jpg")
+	img, err := getDecodedImg("./preview.jpg")
 	if err != nil {
 		panic(err)
 	}
 
 	preview := getBasicString(img, 40)
-
 	preview = preview[:len(preview)-1]
 
 	stream := lipgloss.JoinVertical(lipgloss.Left, preview, topRow, bottomRow)
 
-	// log.Printf("%q", stream)
-
-	fmt.Fprintf(w, "%v", stream)
+	fmt.Fprint(w, stream)
 }
 
 // func (d Delegate) Render(w io.Writer, m list.Model, index int, item list.Item) {

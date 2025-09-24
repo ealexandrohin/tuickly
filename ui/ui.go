@@ -1,7 +1,6 @@
 package ui
 
 import (
-	"log"
 	"strings"
 
 	"github.com/charmbracelet/bubbles/list"
@@ -51,11 +50,12 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case cmds.LiveMsg:
 		// m.UX.List.Mdl = list.New(msg, streamlist.New(m.Ctx), m.Ctx.Window.Width, m.Ctx.Window.Height-(m.Header.Height+m.Footer.Height))
-		log.Println(m.Ctx.Window)
+		// log.Println(m.Ctx.Window)
 		m.UX.List.Mdl = list.New(msg, streamlist.New(m.Ctx), m.Ctx.Window.Width, 33)
 		m.UX.List.Mdl.SetShowTitle(false)
 		m.UX.List.Mdl.SetShowFilter(false)
 		m.UX.List.Mdl.SetShowStatusBar(false)
+		m.UX.List.Mdl.SetHorizontalView(true)
 		m.UX.List.Ready = true
 
 		return m, nil

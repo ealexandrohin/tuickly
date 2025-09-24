@@ -12,6 +12,7 @@ import (
 	"github.com/eAlexandrohin/tuickly/errs"
 	"github.com/eAlexandrohin/tuickly/ui"
 	"github.com/eAlexandrohin/tuickly/ui/styles"
+	"github.com/eAlexandrohin/tuickly/vars"
 )
 
 type Model struct {
@@ -91,12 +92,12 @@ func main() {
 
 	log.SetOutput(f)
 
-	p := tea.NewProgram(initialModel(),
+	vars.Program = tea.NewProgram(initialModel(),
 		tea.WithAltScreen(),
 		// tea.WithMouseCellMotion(),
 	)
 
-	if _, err := p.Run(); err != nil {
+	if _, err := vars.Program.Run(); err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}

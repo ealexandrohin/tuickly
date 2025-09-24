@@ -23,20 +23,20 @@ type (
 type URIMsg struct {
 	URI        string
 	DeviceCode string
-	Response   *helix.DeviceVerificationURIResponse
+	// Response   *helix.DeviceVerificationURIResponse
 }
 
 type TokenMsg struct {
-	Token    string
-	Refresh  string
-	Response *helix.DeviceAccessTokenResponse
+	Token   string
+	Refresh string
+	// Response *helix.DeviceAccessTokenResponse
 }
 
 type TokenUserMsg struct {
-	Token    string
-	Refresh  string
-	User     helix.User
-	Response *helix.UsersResponse
+	Token   string
+	Refresh string
+	User    helix.User
+	// Response *helix.UsersResponse
 }
 
 type AuthMsg struct {
@@ -69,7 +69,7 @@ func newAuth() tea.Cmd {
 		return URIMsg{
 			URI:        r.Data.VerificationURI,
 			DeviceCode: r.Data.DeviceCode,
-			Response:   r,
+			// Response:   r,
 		}
 	}
 }
@@ -97,17 +97,17 @@ func newToken(m URIMsg) tea.Cmd {
 			return errs.ErrorMsg{Msg: r.ErrorMessage}
 		}
 
-		log.Println("auth", r.Data.AccessToken, r.Data.RefreshToken)
+		log.Printf("auth %+v %+v", r.Data.AccessToken, r.Data.RefreshToken)
 
 		return TokenMsg{
-			Token:    r.Data.AccessToken,
-			Refresh:  r.Data.RefreshToken,
-			Response: r,
+			Token:   r.Data.AccessToken,
+			Refresh: r.Data.RefreshToken,
+			// Response: r,
 		}
 	}
 }
 
-func checkToken(m *TokenMsg) tea.Cmd {
+func checkToken(m TokenMsg) tea.Cmd {
 	return func() tea.Msg {
 		vars.Client.SetDeviceAccessToken(m.Token)
 		vars.Client.SetRefreshToken(m.Refresh)
@@ -118,15 +118,15 @@ func checkToken(m *TokenMsg) tea.Cmd {
 		}
 
 		return TokenUserMsg{
-			Token:    m.Token,
-			Refresh:  m.Refresh,
-			User:     r.Data.Users[0],
-			Response: r,
+			Token:   m.Token,
+			Refresh: m.Refresh,
+			User:    r.Data.Users[0],
+			// Response: r,
 		}
 	}
 }
 
-func saveAuth(m *TokenUserMsg) tea.Cmd {
+func saveAuth(m TokenUserMsg) tea.Cmd {
 	return func() tea.Msg {
 		auth := ctx.Auth{
 			Is:   true,

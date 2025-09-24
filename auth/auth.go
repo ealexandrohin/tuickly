@@ -41,9 +41,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case ContinueTickMsg:
 		return m, AuthTick()
 	case TokenMsg:
-		return m, checkToken(&msg)
+		return m, checkToken(msg)
 	case TokenUserMsg:
-		return m, saveAuth(&msg)
+		return m, saveAuth(msg)
 		// case AuthMsg:
 		// log.Println("before", m.Ctx.Auth)
 
