@@ -1,4 +1,4 @@
-module github.com/eAlexandrohin/tuickly
+module github.com/ealexandrohin/tuickly
 
 go 1.24.5
 
@@ -7,7 +7,6 @@ require (
 	github.com/charmbracelet/bubbletea v1.3.6
 	github.com/charmbracelet/lipgloss v1.1.0
 	github.com/charmbracelet/x/ansi v0.10.1
-	github.com/lucasb-eyer/go-colorful v1.2.0
 	github.com/muesli/termenv v0.16.0
 	github.com/nfnt/resize v0.0.0-20180221191011-83c6a9932646
 	github.com/nicklaw5/helix v0.0.0-00010101000000-000000000000
@@ -21,6 +20,7 @@ require (
 	github.com/charmbracelet/x/term v0.2.1 // indirect
 	github.com/erikgeiser/coninput v0.0.0-20211004153227-1c3628e74d0f // indirect
 	github.com/golang-jwt/jwt/v4 v4.0.0 // indirect
+	github.com/lucasb-eyer/go-colorful v1.2.0 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/mattn/go-localereader v0.0.1 // indirect
 	github.com/mattn/go-runewidth v0.0.16 // indirect

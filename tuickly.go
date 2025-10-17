@@ -7,12 +7,13 @@ import (
 	"os"
 
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/eAlexandrohin/tuickly/auth"
-	"github.com/eAlexandrohin/tuickly/ctx"
-	"github.com/eAlexandrohin/tuickly/errs"
-	"github.com/eAlexandrohin/tuickly/ui"
-	"github.com/eAlexandrohin/tuickly/ui/styles"
-	"github.com/eAlexandrohin/tuickly/vars"
+	"github.com/ealexandrohin/tuickly/auth"
+	"github.com/ealexandrohin/tuickly/ctx"
+	"github.com/ealexandrohin/tuickly/errs"
+	"github.com/ealexandrohin/tuickly/msgs"
+	"github.com/ealexandrohin/tuickly/ui"
+	"github.com/ealexandrohin/tuickly/ui/styles"
+	"github.com/ealexandrohin/tuickly/vars"
 )
 
 type Model struct {
@@ -52,10 +53,17 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.Ctx.Window.Height = msg.Height
 	case errs.ErrorMsg:
 		m.ErrorMsg = msg
-	case auth.AuthMsg:
+	case msgs.AuthMsg:
 		m.Ctx.Auth = msg.Auth
 
 		return m, m.UI.Init()
+	case msgs.RefreshTokenMsg:
+		mdl, cmd := m.Auth.Update(msg)
+		m.Auth = mdl.(auth.Model)
+
+		return m, cmd
+	case msgs.RefreshAuthMsg:
+		log.Println("TUICKLY REFRESHAUTHMSG")
 	}
 
 	if !m.Ctx.Auth.Is {
@@ -73,7 +81,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 func (m Model) View() string {
 	if m.ErrorMsg != (errs.ErrorMsg{}) {
-		return m.ErrorMsg.Error()
+		return m.Ctx.Styles.Err.Style.Width(m.Ctx.Window.Width).Render(m.ErrorMsg.Error())
 	}
 
 	if !m.Ctx.Auth.Is {

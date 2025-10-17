@@ -5,6 +5,7 @@ import (
 	"path/filepath"
 
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/ealexandrohin/tuickly/msgs"
 	helix "github.com/nicklaw5/helix"
 )
 
@@ -31,6 +32,9 @@ func init() {
 	ConfigPath = filepath.Join(HomePath, ".config", "tuickly")
 	AuthPath = filepath.Join(ConfigPath, "auth.gob")
 
+	// proxyURL, _ := url.Parse("http://t879694:raiTh+e3hoot@192.168.1.240:3128")
+	// http.DefaultTransport = &http.Transport{Proxy: http.ProxyURL(proxyURL)}
+
 	Client, err = helix.NewClient(&helix.Options{
 		ClientID: ClientID,
 	})
@@ -39,6 +43,9 @@ func init() {
 	}
 
 	Client.OnUserAccessTokenRefreshed(func(newAccessToken string, newRefreshToken string) {
-		// Program.Send(TokenMsg{})
+		Program.Send(msgs.RefreshTokenMsg{
+			Token:   newAccessToken,
+			Refresh: newRefreshToken,
+		})
 	})
 }

@@ -5,7 +5,7 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/eAlexandrohin/tuickly/ctx"
+	"github.com/ealexandrohin/tuickly/ctx"
 )
 
 type Model struct {
@@ -16,7 +16,7 @@ type Model struct {
 func New(ctx *ctx.Ctx) Model {
 	return Model{
 		Ctx:    ctx,
-		Height: 0,
+		Height: 1,
 	}
 }
 
@@ -29,17 +29,27 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m Model) View() string {
-	row := lipgloss.JoinHorizontal(
-		lipgloss.Center,
-		m.Ctx.Styles.Tab.Active.Style.Render("Live"),
-		m.Ctx.Styles.Tab.Style.Render("Follows"),
-		m.Ctx.Styles.Tab.Style.Render("ealexandrohin"),
-		m.Ctx.Styles.Tab.Style.Render("Settings"),
-		m.Ctx.Styles.Tab.Style.Render("About"),
+	var tabs []string
+
+	tabs = append(tabs,
+		m.Ctx.Styles.Tab.Normal.Render(""),
+		m.Ctx.Styles.Tab.Active.Render("Following"),
+		m.Ctx.Styles.Tab.Normal.Render("Browse"),
+		m.Ctx.Styles.Tab.Normal.Render(""),
 	)
 
-	gap := m.Ctx.Styles.Tab.Gap.Style.Render(strings.Repeat(" ", max(0, m.Ctx.Window.Width-lipgloss.Width(row))))
-	row = lipgloss.JoinHorizontal(lipgloss.Bottom, row, gap, "\n")
+	left := m.Ctx.Styles.Tab.Left.Render("twitch")
+	right := m.Ctx.Styles.Tab.Right.Render("ealexandrohin")
+	middle := m.Ctx.Styles.Tab.Style.
+		Width(m.Ctx.Window.Width - lipgloss.Width(left) - lipgloss.Width(right)).
+		Render(strings.Join(tabs, m.Ctx.Styles.Tab.Separator.Render("|")))
+
+	row := lipgloss.JoinHorizontal(
+		lipgloss.Left,
+		left,
+		middle,
+		right,
+	)
 
 	return row
 }

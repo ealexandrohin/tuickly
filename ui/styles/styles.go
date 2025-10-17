@@ -2,15 +2,17 @@ package styles
 
 import (
 	"github.com/charmbracelet/lipgloss"
-	"github.com/eAlexandrohin/tuickly/ui/colors"
+	"github.com/ealexandrohin/tuickly/ui/colors"
+	"github.com/ealexandrohin/tuickly/ui/sizes"
 )
 
-// colors from lipgloss example
-// Foreground(lipgloss.Color("#C1C6B2")).
-// Background(lipgloss.Color("#353533")).
-
 type Styles struct {
+	Sizes  sizes.Sizes
 	Colors colors.Colors
+
+	Err struct {
+		Style lipgloss.Style
+	}
 
 	Auth struct {
 		Dialog struct {
@@ -24,18 +26,14 @@ type Styles struct {
 	}
 
 	Tab struct {
-		Style  lipgloss.Style
-		Border lipgloss.Border
+		Style lipgloss.Style
 
-		Active struct {
-			Style  lipgloss.Style
-			Border lipgloss.Border
-		}
+		Normal    lipgloss.Style
+		Active    lipgloss.Style
+		Separator lipgloss.Style
 
-		Gap struct {
-			Style  lipgloss.Style
-			Border lipgloss.Border
-		}
+		Left  lipgloss.Style
+		Right lipgloss.Style
 	}
 
 	Status struct {
@@ -75,12 +73,48 @@ type Styles struct {
 			}
 		}
 	}
+
+	SideList struct {
+		Style  lipgloss.Style
+		Border lipgloss.Border
+
+		Normal struct {
+			Style lipgloss.Style
+
+			Top struct {
+				Style lipgloss.Style
+
+				Left  lipgloss.Style
+				Right lipgloss.Style
+			}
+
+			Bottom lipgloss.Style
+		}
+
+		Selected struct {
+			Style lipgloss.Style
+
+			Top struct {
+				Style lipgloss.Style
+
+				Left  lipgloss.Style
+				Right lipgloss.Style
+			}
+
+			Bottom lipgloss.Style
+		}
+	}
 }
 
 func New() Styles {
 	s := Styles{
+		Sizes:  sizes.New(),
 		Colors: colors.New(),
 	}
+
+	// errors
+
+	s.Err.Style = lipgloss.NewStyle()
 
 	// auth dialog
 
@@ -97,63 +131,45 @@ func New() Styles {
 		Foreground(s.Colors.Text).
 		Align(lipgloss.Center)
 
-	// tab normal
-
-	s.Tab.Border = lipgloss.Border{
-		Top:         "─",
-		Bottom:      "━",
-		Left:        "│",
-		Right:       "│",
-		TopLeft:     "┌",
-		TopRight:    "┐",
-		BottomLeft:  "┷",
-		BottomRight: "┷",
-	}
+	// tabs
 
 	s.Tab.Style = lipgloss.NewStyle().
-		Border(s.Tab.Border).
-		BorderForeground(s.Colors.Primary).
-		Padding(0, 1)
+		Foreground(s.Colors.Text)
+
+	s.Tab.Separator = s.Tab.Style
+
+	// tab normal
+
+	s.Tab.Normal = s.Tab.Style.
+		Padding(0, 2)
 
 	// tab active
 
-	s.Tab.Active.Border = lipgloss.Border{
-		Top:         "━",
-		Bottom:      " ",
-		Left:        "┃",
-		Right:       "┃",
-		TopLeft:     "┏",
-		TopRight:    "┓",
-		BottomLeft:  "┛",
-		BottomRight: "┗",
-	}
+	s.Tab.Active = s.Tab.Normal.
+		Background(s.Colors.Primary).
+		Bold(true)
 
-	s.Tab.Active.Style = s.Tab.Style.Border(s.Tab.Active.Border)
+	// tab left
 
-	// tab gap
+	s.Tab.Left = s.Tab.Style.
+		Background(s.Colors.Twitch).
+		Padding(0, 2).
+		Bold(true)
 
-	s.Tab.Gap.Border = lipgloss.Border{
-		Bottom:      "━",
-		BottomLeft:  "━",
-		BottomRight: "━",
-	}
+	// tab right
 
-	s.Tab.Gap.Style = lipgloss.NewStyle().
-		Border(s.Tab.Gap.Border).
-		BorderForeground(s.Colors.Primary)
+	s.Tab.Right = s.Tab.Left
 
 	// statusbar
-
-	s.Status.Left = lipgloss.NewStyle().
-		Foreground(s.Colors.Text).
-		Background(s.Colors.Primary).
-		Padding(0, 1)
 
 	s.Status.Style = lipgloss.NewStyle().
 		Foreground(s.Colors.Text).
 		Background(s.Colors.Twitch).
-		// Faint(true).
-		Padding(0, 1)
+		Padding(0, 2)
+
+	s.Status.Left = s.Status.Style.
+		Background(s.Colors.Primary).
+		Bold(true)
 
 	s.Status.Right = s.Status.Left.Align(lipgloss.Right)
 
@@ -162,8 +178,10 @@ func New() Styles {
 	s.StreamList.Normal.Style = lipgloss.NewStyle().
 		Foreground(s.Colors.Text)
 
+	s.StreamList.Normal.Border = lipgloss.HiddenBorder()
+
 	s.StreamList.Normal.Top.Style = s.StreamList.Normal.Style.
-		Width(40)
+		Width(s.Sizes.StreamList.Preview.Width)
 
 	s.StreamList.Normal.Bottom.Left = s.StreamList.Normal.Style.
 		Align(lipgloss.Left).
@@ -189,26 +207,73 @@ func New() Styles {
 	}
 
 	s.StreamList.Selected.Style = s.StreamList.Normal.Style.
-		Background(s.Colors.Primary)
+		Background(s.Colors.Primary).
+		Bold(true)
 
 	s.StreamList.Selected.Top.Style = s.StreamList.Selected.Style.
-		Width(40)
+		Width(s.Sizes.StreamList.Preview.Width)
 
 	s.StreamList.Selected.Bottom.Left = s.StreamList.Selected.Style.
 		Align(lipgloss.Left).
-		Foreground(s.Colors.Twitch).
-		Bold(true)
+		Foreground(s.Colors.Twitch)
 
 	s.StreamList.Selected.Bottom.Middle = s.StreamList.Selected.Style.
 		Align(lipgloss.Center)
 
 	s.StreamList.Selected.Bottom.Right = s.StreamList.Selected.Style.
 		Align(lipgloss.Right).
-		Foreground(s.Colors.Important).
+		Foreground(s.Colors.Important)
+
+	s.StreamList.Selected.Style = s.StreamList.Selected.Style.
+		Border(s.StreamList.Selected.Border)
+
+	// sidelist
+
+	s.SideList.Border = lipgloss.NormalBorder()
+
+	s.SideList.Style = lipgloss.NewStyle().
+		Border(s.SideList.Border, false, true, false, false).
+		BorderForeground(s.Colors.Primary)
+
+	// sidelist normal
+
+	s.SideList.Normal.Style = lipgloss.NewStyle().
+		Foreground(s.Colors.Text)
+
+	s.SideList.Normal.Top.Style = s.SideList.Normal.Style
+
+	s.SideList.Normal.Top.Left = s.SideList.Normal.Top.Style.
+		Align(lipgloss.Left).
+		Width(s.Sizes.SideList.Width / 2).
+		Foreground(s.Colors.Twitch)
+
+	s.SideList.Normal.Top.Right = s.SideList.Normal.Top.Style.
+		Align(lipgloss.Right).
+		Width(s.Sizes.SideList.Width / 2).
+		Foreground(s.Colors.Important)
+
+	s.SideList.Normal.Bottom = s.SideList.Normal.Style
+
+	// sidelist selected
+
+	s.SideList.Selected.Style = lipgloss.NewStyle().
+		Foreground(s.Colors.Text).
+		Background(s.Colors.Primary)
+
+	s.SideList.Selected.Top.Style = s.SideList.Selected.Style.
 		Bold(true)
 
-	// s.StreamList.Selected.Style = s.StreamList.Selected.Style.
-	// 	Border(s.StreamList.Selected.Border)
+	s.SideList.Selected.Top.Left = s.SideList.Selected.Top.Style.
+		Align(lipgloss.Left).
+		Width(s.Sizes.SideList.Width / 2).
+		Foreground(s.Colors.Twitch)
+
+	s.SideList.Selected.Top.Right = s.SideList.Selected.Top.Style.
+		Align(lipgloss.Right).
+		Width(s.Sizes.SideList.Width / 2).
+		Foreground(s.Colors.Important)
+
+	s.SideList.Selected.Bottom = s.SideList.Selected.Style
 
 	return s
 }

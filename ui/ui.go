@@ -2,22 +2,27 @@ package ui
 
 import (
 	"strings"
+	"time"
 
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/eAlexandrohin/tuickly/cmds"
-	"github.com/eAlexandrohin/tuickly/ctx"
-	"github.com/eAlexandrohin/tuickly/ui/footer"
-	"github.com/eAlexandrohin/tuickly/ui/header"
-	"github.com/eAlexandrohin/tuickly/ux"
-	"github.com/eAlexandrohin/tuickly/ux/streamlist"
+	"github.com/charmbracelet/lipgloss"
+	"github.com/ealexandrohin/tuickly/cmds"
+	"github.com/ealexandrohin/tuickly/ctx"
+	"github.com/ealexandrohin/tuickly/msgs"
+	"github.com/ealexandrohin/tuickly/ui/footer"
+	"github.com/ealexandrohin/tuickly/ui/header"
+	"github.com/ealexandrohin/tuickly/ux"
+	"github.com/ealexandrohin/tuickly/ux/sidelist"
+	"github.com/ealexandrohin/tuickly/ux/streamlist"
 )
 
 type Model struct {
-	Ctx    *ctx.Ctx
-	Footer footer.Model
-	Header header.Model
-	UX     ux.UX
+	Ctx       *ctx.Ctx
+	ClockTick time.Time
+	Footer    footer.Model
+	Header    header.Model
+	UX        ux.UX
 }
 
 // type UI struct {
@@ -35,36 +40,53 @@ type Model struct {
 
 func New(ctx *ctx.Ctx) Model {
 	return Model{
-		Ctx:    ctx,
-		Footer: footer.New(ctx),
-		Header: header.New(ctx),
-		UX:     ux.New(ctx),
+		Ctx:       ctx,
+		ClockTick: time.Now(),
+		Footer:    footer.New(ctx),
+		Header:    header.New(ctx),
+		UX:        ux.New(ctx),
 	}
 }
 
 func (m Model) Init() tea.Cmd {
-	return cmds.Live(m.Ctx)
+	return tea.Batch(cmds.ClockTick(), cmds.Live(m.Ctx))
 }
 
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
-	case cmds.LiveMsg:
-		// m.UX.List.Mdl = list.New(msg, streamlist.New(m.Ctx), m.Ctx.Window.Width, m.Ctx.Window.Height-(m.Header.Height+m.Footer.Height))
-		// log.Println(m.Ctx.Window)
-		m.UX.List.Mdl = list.New(msg, streamlist.New(m.Ctx), m.Ctx.Window.Width, 33)
-		m.UX.List.Mdl.SetShowTitle(false)
-		m.UX.List.Mdl.SetShowFilter(false)
-		m.UX.List.Mdl.SetShowStatusBar(false)
-		m.UX.List.Mdl.SetHorizontalView(true)
-		m.UX.List.Ready = true
+	case msgs.LiveMsg:
+		m.UX.StreamList.Mdl = list.New(msg, streamlist.New(m.Ctx), m.Ctx.Window.Width-m.Ctx.Styles.Sizes.SideList.Width, m.Ctx.Window.Height-m.Header.Height-m.Footer.Height)
+		m.UX.StreamList.Mdl.SetShowTitle(false)
+		m.UX.StreamList.Mdl.SetShowFilter(false)
+		m.UX.StreamList.Mdl.SetShowStatusBar(false)
+		m.UX.StreamList.Mdl.SetHorizontalView(true)
+		m.UX.StreamList.Ready = true
+
+		m.UX.SideList.Mdl = list.New(msg, sidelist.New(m.Ctx), m.Ctx.Styles.Sizes.SideList.Width, m.Ctx.Window.Height-m.Header.Height-m.Footer.Height)
+		m.UX.SideList.Mdl.SetShowTitle(false)
+		m.UX.SideList.Mdl.SetShowFilter(false)
+		m.UX.SideList.Mdl.SetShowStatusBar(false)
+		m.UX.SideList.Mdl.SetShowHelp(false)
+		m.UX.SideList.Mdl.SetShowPagination(false)
+		m.UX.SideList.Ready = true
 
 		return m, nil
+	case msgs.ClockTick:
+		return m, cmds.ClockTick()
 	}
 
-	if m.UX.List.Ready {
+	// if m.UX.StreamList.Ready {
+	// 	var cmd tea.Cmd
+	//
+	// 	m.UX.StreamList.Mdl, cmd = m.UX.StreamList.Mdl.Update(msg)
+	//
+	// 	return m, cmd
+	// }
+
+	if m.UX.SideList.Ready {
 		var cmd tea.Cmd
 
-		m.UX.List.Mdl, cmd = m.UX.List.Mdl.Update(msg)
+		m.UX.SideList.Mdl, cmd = m.UX.SideList.Mdl.Update(msg)
 
 		return m, cmd
 	}
@@ -73,21 +95,41 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m Model) View() string {
-	// return m.Main.UX.List.View()
-
 	var s strings.Builder
 
-	s.WriteString(m.Header.View())
+	// s.WriteString(m.Header.View())
+	//
+	// if m.UX.SideList.Ready {
+	// 	m.UX.StreamList.Mdl.StartSpinner()
+	// 	s.WriteString(lipgloss.JoinHorizontal(lipgloss.Left, m.UX.StreamList.Mdl.View(), m.UX.SideList.Mdl.View()))
+	// 	s.WriteString(lipgloss.JoinHorizontal(lipgloss.Left, m.UX.SideList.Mdl.View(), m.UX.StreamList.Mdl.View()))
+	// 	s.WriteString(m.UX.SideList.Mdl.View() + "\n")
+	// 	s.WriteString(m.UX.StreamList.Mdl.View() + "\n")
+	// }
+	//
+	// s.WriteString(m.Footer.View())
 
-	// log.Println(m.Ctx.Auth)
+	// s.WriteString(
+	// 	lipgloss.JoinVertical(lipgloss.Left,
+	// 		m.Header.View(),
+	// 		lipgloss.JoinHorizontal(lipgloss.Left,
+	// 			m.Ctx.Styles.SideList.Style.Render(m.UX.SideList.Mdl.View()),
+	// 			m.UX.StreamList.Mdl.View(),
+	// 		),
+	// 		m.Footer.View(),
+	// 	),
+	// )
 
-	s.WriteString("\n")
-
-	if m.UX.List.Ready {
-		s.WriteString(m.UX.List.Mdl.View() + "\n")
-	}
-
-	s.WriteString(m.Footer.View())
+	s.WriteString(
+		lipgloss.JoinVertical(lipgloss.Left,
+			m.Header.View(),
+			lipgloss.JoinHorizontal(lipgloss.Left,
+				m.UX.SideList.Mdl.View(),
+				m.UX.StreamList.Mdl.View(),
+			),
+			m.Footer.View(),
+		),
+	)
 
 	return s.String()
 }

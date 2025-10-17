@@ -1,17 +1,25 @@
 package cmds
 
 import (
+	"time"
+
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/eAlexandrohin/tuickly/ctx"
-	"github.com/eAlexandrohin/tuickly/errs"
-	"github.com/eAlexandrohin/tuickly/utils"
-	"github.com/eAlexandrohin/tuickly/ux/streamlist"
-	"github.com/eAlexandrohin/tuickly/vars"
-	helix "github.com/nicklaw5/helix"
+	"github.com/ealexandrohin/tuickly/ctx"
+	"github.com/ealexandrohin/tuickly/errs"
+	"github.com/ealexandrohin/tuickly/msgs"
+	"github.com/ealexandrohin/tuickly/utils"
+	"github.com/ealexandrohin/tuickly/ux/items/stream"
+	"github.com/ealexandrohin/tuickly/vars"
+	"github.com/nicklaw5/helix"
 )
 
-type LiveMsg []list.Item
+func ClockTick() tea.Cmd {
+	// return tea.Tick(1*time.Minute, func(t time.Time) tea.Msg {
+	return tea.Tick(1*time.Second, func(t time.Time) tea.Msg {
+		return msgs.ClockTick(t)
+	})
+}
 
 func Live(ctx *ctx.Ctx) tea.Cmd {
 	return func() tea.Msg {
@@ -33,20 +41,28 @@ func Live(ctx *ctx.Ctx) tea.Cmd {
 			return errs.ErrorMsg{Err: err}
 		}
 
-		// log.Println(live)
+		// log.Printf("%+v", live)
 
-		streamItems := utils.ConvertToItems(live, func(s helix.Stream) list.Item {
-			return streamlist.Item{
-				UserID:      s.UserID,
-				UserLogin:   s.UserLogin,
-				UserName:    s.UserName,
-				GameName:    s.GameName,
-				Title:       s.Title,
-				ViewerCount: s.ViewerCount,
-				StartedAt:   s.StartedAt,
+		streamItems := make([]list.Item, len(live))
+		for i, s := range live {
+			preview, err := utils.GetStreamPreview(s, 39)
+			if err != nil {
+				return errs.ErrorMsg{Err: err}
 			}
-		})
 
-		return LiveMsg(streamItems)
+			streamItems[i] = stream.Item{
+				UserID:       s.UserID,
+				UserLogin:    s.UserLogin,
+				UserName:     s.UserName,
+				GameName:     s.GameName,
+				Title:        s.Title,
+				ViewerCount:  s.ViewerCount,
+				StartedAt:    s.StartedAt,
+				ThumbnailURL: s.ThumbnailURL,
+				Preview:      preview,
+			}
+		}
+
+		return msgs.LiveMsg(streamItems)
 	}
 }

@@ -1,7 +1,7 @@
 package ctx
 
 import (
-	"github.com/eAlexandrohin/tuickly/ui/styles"
+	"github.com/ealexandrohin/tuickly/ui/styles"
 	helix "github.com/nicklaw5/helix"
 )
 

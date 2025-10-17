@@ -2,13 +2,18 @@ package ux
 
 import (
 	"github.com/charmbracelet/bubbles/list"
-	"github.com/eAlexandrohin/tuickly/ctx"
+	"github.com/ealexandrohin/tuickly/ctx"
 )
 
 type UX struct {
 	Ctx *ctx.Ctx
 
-	List struct {
+	StreamList struct {
+		Mdl   list.Model
+		Ready bool
+	}
+
+	SideList struct {
 		Mdl   list.Model
 		Ready bool
 	}
