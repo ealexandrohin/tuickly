@@ -5,13 +5,13 @@ import (
 	_ "image/jpeg"
 	_ "image/png"
 	"io"
-	"strconv"
 
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/x/ansi"
 	"github.com/ealexandrohin/tuickly/ctx"
+	"github.com/ealexandrohin/tuickly/utils"
 	"github.com/ealexandrohin/tuickly/ux/items/stream"
 )
 
@@ -59,11 +59,13 @@ func (d Delegate) Render(w io.Writer, m list.Model, index int, item list.Item) {
 		gameName    string
 		viewerCount string
 		s           = &d.Ctx.Styles
+		innerWidth  = s.Sizes.SideList.Inner.Width
 	)
 
-	userName = ansi.Truncate(i.UserName, d.Width()/2, "…")
-	viewerCount = strconv.Itoa(i.ViewerCount)
-	gameName = ansi.Truncate(i.GameName, d.Width(), "…")
+	// viewerCount = strconv.Itoa(i.ViewerCount)
+	viewerCount = " " + utils.Humanize(i.ViewerCount)
+	userName = ansi.Truncate(i.UserName, innerWidth-lipgloss.Width(viewerCount), "…")
+	gameName = ansi.Truncate(i.GameName, innerWidth, "…")
 
 	isSelected := index == m.Index()
 
@@ -73,17 +75,18 @@ func (d Delegate) Render(w io.Writer, m list.Model, index int, item list.Item) {
 		bottomRow string
 	)
 
-	if isSelected {
-		topLeft = s.SideList.Selected.Top.Left.Render(userName)
-		topRight = s.SideList.Selected.Top.Right.Render(viewerCount)
-		bottomRow = s.SideList.Selected.Bottom.Width(d.Width()).Render(gameName)
+	if isSelected && d.Ctx.States.SideList.Focused {
+		topRight = s.SideList.Selected.Top.Right.Width(lipgloss.Width(viewerCount)).Render(viewerCount)
+		topLeft = s.SideList.Selected.Top.Left.Width(innerWidth - lipgloss.Width(topRight)).Render(userName)
+		bottomRow = s.SideList.Selected.Bottom.Width(innerWidth).Render(gameName)
 	} else {
-		topLeft = s.SideList.Normal.Top.Left.Render(userName)
-		topRight = s.SideList.Normal.Top.Right.Render(viewerCount)
-		bottomRow = s.SideList.Normal.Bottom.Width(d.Width()).Render(gameName)
+		topRight = s.SideList.Normal.Top.Right.Width(lipgloss.Width(viewerCount)).Render(viewerCount)
+		topLeft = s.SideList.Normal.Top.Left.Width(innerWidth - lipgloss.Width(topRight)).Render(userName)
+		bottomRow = s.SideList.Normal.Bottom.Width(innerWidth).Render(gameName)
 	}
 
-	stream := lipgloss.JoinVertical(lipgloss.Left, lipgloss.JoinHorizontal(lipgloss.Left, topLeft, topRight), bottomRow)
+	// stream := lipgloss.JoinVertical(lipgloss.Left, lipgloss.JoinHorizontal(lipgloss.Left, topLeft, topRight), bottomRow)
+	stream := s.SideList.Style.Render(lipgloss.JoinVertical(lipgloss.Left, lipgloss.JoinHorizontal(lipgloss.Left, topLeft, topRight), bottomRow))
 
 	fmt.Fprint(w, stream)
 }

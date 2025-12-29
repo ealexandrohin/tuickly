@@ -1,4 +1,4 @@
-package vars
+package consts
 
 import (
 	"os"

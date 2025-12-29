@@ -1,4 +1,4 @@
-package ux
+package pacman
 
 import (
 	"time"

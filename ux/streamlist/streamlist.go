@@ -3,8 +3,8 @@ package streamlist
 import (
 	"fmt"
 	_ "image/jpeg"
-	_ "image/png"
 	"io"
+	"regexp"
 	"strconv"
 
 	"github.com/charmbracelet/bubbles/list"
@@ -15,29 +15,9 @@ import (
 	"github.com/ealexandrohin/tuickly/ux/items/stream"
 )
 
-// type Item struct {
-// 	UserID       string
-// 	UserLogin    string
-// 	UserName     string
-// 	GameName     string
-// 	Title        string
-// 	ViewerCount  int
-// 	StartedAt    time.Time
-// 	ThumbnailURL string
-// 	Preview      string
-// }
-//
-// func (s Item) FilterValue() string {
-// 	return fmt.Sprintf("%s %s %s", s.UserLogin, s.GameName, s.Title)
-// }
-
-// func (s Item) Get() Item {
-// 	return s
-// }
-
 type Delegate struct {
 	Ctx *ctx.Ctx
-	// UpdateFunc      func(tea.Msg, *Model) tea.Cmd
+	// UpdateFunc func(tea.Msg, *list.Model) tea.Cmd
 	// ShortHelpFunc   func() []key.Binding
 	// FullHelpFunc    func() [][]key.Binding
 }
@@ -79,19 +59,23 @@ func (d Delegate) Render(w io.Writer, m list.Model, index int, item list.Item) {
 		gameName    string
 		viewerCount string
 		s           = &d.Ctx.Styles
+		innerWidth  = s.Sizes.StreamList.Inner.Width
 	)
+
+	// stupid ass emojis
+	regex := regexp.MustCompile(`[\s\x{FE00}-\x{FE0F}\x{1F3FB}-\x{1F3FF}]+`)
 
 	viewerCount = strconv.Itoa(i.ViewerCount)
 
 	title = ansi.Truncate(
-		i.Title,
-		d.Ctx.Styles.Sizes.StreamList.Preview.Width,
+		regex.ReplaceAllString(i.Title, " "),
+		innerWidth,
 		"…",
 	)
 
 	gameName = ansi.Truncate(
 		i.GameName,
-		d.Ctx.Styles.Sizes.StreamList.Preview.Width-
+		innerWidth-
 			len(i.UserName)-
 			len(viewerCount)-
 			2, // for spacing in between
@@ -107,14 +91,14 @@ func (d Delegate) Render(w io.Writer, m list.Model, index int, item list.Item) {
 		bottomRow   string
 	)
 
-	if isSelected {
+	if isSelected && d.Ctx.States.StreamList.Focused {
 		topRow = s.StreamList.Selected.Top.Style.Render(title)
 		bottomLeft = s.StreamList.Selected.Bottom.Left.Render(i.UserName)
 		bottomRight = s.StreamList.Selected.Bottom.Right.Render(viewerCount)
 		bottomRow = lipgloss.JoinHorizontal(lipgloss.Left,
 			bottomLeft,
 			s.StreamList.Selected.Bottom.Middle.
-				Width(d.Ctx.Styles.Sizes.StreamList.Preview.Width-
+				Width(innerWidth-
 					lipgloss.Width(bottomLeft)-
 					lipgloss.Width(bottomRight)).
 				Render(gameName),
@@ -127,7 +111,7 @@ func (d Delegate) Render(w io.Writer, m list.Model, index int, item list.Item) {
 		bottomRow = lipgloss.JoinHorizontal(lipgloss.Left,
 			bottomLeft,
 			s.StreamList.Normal.Bottom.Middle.
-				Width(d.Ctx.Styles.Sizes.StreamList.Preview.Width-
+				Width(innerWidth-
 					lipgloss.Width(bottomLeft)-
 					lipgloss.Width(bottomRight)).
 				Render(gameName),
@@ -140,13 +124,11 @@ func (d Delegate) Render(w io.Writer, m list.Model, index int, item list.Item) {
 
 	stream := lipgloss.JoinVertical(lipgloss.Left, preview, topRow, bottomRow)
 
-	if isSelected {
+	if isSelected && d.Ctx.States.StreamList.Focused {
 		stream = lipgloss.NewStyle().Border(s.StreamList.Selected.Border).BorderForeground(s.Colors.Primary).Render(stream)
 	} else {
 		stream = lipgloss.NewStyle().Border(s.StreamList.Normal.Border).Render(stream)
 	}
-
-	// stream = s.StreamList.Selected.Style.Border(s.StreamList.Selected.Border).Render(stream)
 
 	fmt.Fprint(w, stream)
 }

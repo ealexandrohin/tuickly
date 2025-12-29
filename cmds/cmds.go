@@ -5,13 +5,14 @@ import (
 
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/nicklaw5/helix"
+
+	"github.com/ealexandrohin/tuickly/consts"
 	"github.com/ealexandrohin/tuickly/ctx"
 	"github.com/ealexandrohin/tuickly/errs"
 	"github.com/ealexandrohin/tuickly/msgs"
 	"github.com/ealexandrohin/tuickly/utils"
 	"github.com/ealexandrohin/tuickly/ux/items/stream"
-	"github.com/ealexandrohin/tuickly/vars"
-	"github.com/nicklaw5/helix"
 )
 
 func ClockTick() tea.Cmd {
@@ -30,7 +31,7 @@ func Live(ctx *ctx.Ctx) tea.Cmd {
 				After:  after,
 			}
 
-			resp, err := vars.Client.GetFollowedStream(params)
+			resp, err := consts.Client.GetFollowedStream(params)
 			if err != nil {
 				return nil, "", err
 			}
@@ -45,7 +46,7 @@ func Live(ctx *ctx.Ctx) tea.Cmd {
 
 		streamItems := make([]list.Item, len(live))
 		for i, s := range live {
-			preview, err := utils.GetStreamPreview(s, 39)
+			preview, err := utils.GetStreamPreview(s, ctx.Styles.Sizes.StreamList.Inner.Width)
 			if err != nil {
 				return errs.ErrorMsg{Err: err}
 			}

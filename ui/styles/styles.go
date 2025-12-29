@@ -141,7 +141,7 @@ func New() Styles {
 	// tab normal
 
 	s.Tab.Normal = s.Tab.Style.
-		Padding(0, 2)
+		Padding(0, s.Sizes.Padding)
 
 	// tab active
 
@@ -153,12 +153,13 @@ func New() Styles {
 
 	s.Tab.Left = s.Tab.Style.
 		Background(s.Colors.Twitch).
-		Padding(0, 2).
+		Padding(0, 3).
 		Bold(true)
 
 	// tab right
 
-	s.Tab.Right = s.Tab.Left
+	s.Tab.Right = s.Tab.Left.
+		Padding(0, s.Sizes.Padding)
 
 	// statusbar
 
@@ -181,7 +182,7 @@ func New() Styles {
 	s.StreamList.Normal.Border = lipgloss.HiddenBorder()
 
 	s.StreamList.Normal.Top.Style = s.StreamList.Normal.Style.
-		Width(s.Sizes.StreamList.Preview.Width)
+		Width(s.Sizes.StreamList.Inner.Width)
 
 	s.StreamList.Normal.Bottom.Left = s.StreamList.Normal.Style.
 		Align(lipgloss.Left).
@@ -211,7 +212,7 @@ func New() Styles {
 		Bold(true)
 
 	s.StreamList.Selected.Top.Style = s.StreamList.Selected.Style.
-		Width(s.Sizes.StreamList.Preview.Width)
+		Width(s.Sizes.StreamList.Inner.Width)
 
 	s.StreamList.Selected.Bottom.Left = s.StreamList.Selected.Style.
 		Align(lipgloss.Left).
@@ -229,11 +230,15 @@ func New() Styles {
 
 	// sidelist
 
-	s.SideList.Border = lipgloss.NormalBorder()
+	// s.SideList.Border = lipgloss.NormalBorder()
+	s.SideList.Border = lipgloss.Border{
+		Right: "│",
+	}
 
 	s.SideList.Style = lipgloss.NewStyle().
+		PaddingRight(1).
 		Border(s.SideList.Border, false, true, false, false).
-		BorderForeground(s.Colors.Primary)
+		BorderForeground(s.Colors.Background)
 
 	// sidelist normal
 
@@ -244,12 +249,10 @@ func New() Styles {
 
 	s.SideList.Normal.Top.Left = s.SideList.Normal.Top.Style.
 		Align(lipgloss.Left).
-		Width(s.Sizes.SideList.Width / 2).
 		Foreground(s.Colors.Twitch)
 
 	s.SideList.Normal.Top.Right = s.SideList.Normal.Top.Style.
 		Align(lipgloss.Right).
-		Width(s.Sizes.SideList.Width / 2).
 		Foreground(s.Colors.Important)
 
 	s.SideList.Normal.Bottom = s.SideList.Normal.Style
@@ -265,12 +268,10 @@ func New() Styles {
 
 	s.SideList.Selected.Top.Left = s.SideList.Selected.Top.Style.
 		Align(lipgloss.Left).
-		Width(s.Sizes.SideList.Width / 2).
 		Foreground(s.Colors.Twitch)
 
 	s.SideList.Selected.Top.Right = s.SideList.Selected.Top.Style.
 		Align(lipgloss.Right).
-		Width(s.Sizes.SideList.Width / 2).
 		Foreground(s.Colors.Important)
 
 	s.SideList.Selected.Bottom = s.SideList.Selected.Style

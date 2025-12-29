@@ -3,10 +3,11 @@ package colors
 import "github.com/charmbracelet/lipgloss"
 
 type Colors struct {
-	Important lipgloss.Color
-	Primary   lipgloss.Color
-	Text      lipgloss.Color
-	Twitch    lipgloss.Color
+	Important  lipgloss.Color
+	Primary    lipgloss.Color
+	Text       lipgloss.Color
+	Twitch     lipgloss.Color
+	Background lipgloss.Color
 }
 
 var (
@@ -23,13 +24,15 @@ var (
 	red   = lipgloss.Color("#FF0000")
 	green = lipgloss.Color("#00FF00")
 	blue  = lipgloss.Color("#0000FF")
+	gray  = lipgloss.Color("#404040")
 )
 
 func New() Colors {
 	return Colors{
-		Important: red,
-		Primary:   pacman,
-		Text:      white,
-		Twitch:    purple,
+		Important:  red,
+		Primary:    pacman,
+		Text:       white,
+		Twitch:     purple,
+		Background: gray,
 	}
 }

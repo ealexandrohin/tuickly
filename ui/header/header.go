@@ -39,7 +39,7 @@ func (m Model) View() string {
 	)
 
 	left := m.Ctx.Styles.Tab.Left.Render("twitch")
-	right := m.Ctx.Styles.Tab.Right.Render("ealexandrohin")
+	right := m.Ctx.Styles.Tab.Right.Render(m.Ctx.Auth.User.DisplayName)
 	middle := m.Ctx.Styles.Tab.Style.
 		Width(m.Ctx.Window.Width - lipgloss.Width(left) - lipgloss.Width(right)).
 		Render(strings.Join(tabs, m.Ctx.Styles.Tab.Separator.Render("|")))

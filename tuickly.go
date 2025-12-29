@@ -8,12 +8,12 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/ealexandrohin/tuickly/auth"
+	"github.com/ealexandrohin/tuickly/consts"
 	"github.com/ealexandrohin/tuickly/ctx"
 	"github.com/ealexandrohin/tuickly/errs"
 	"github.com/ealexandrohin/tuickly/msgs"
 	"github.com/ealexandrohin/tuickly/ui"
 	"github.com/ealexandrohin/tuickly/ui/styles"
-	"github.com/ealexandrohin/tuickly/vars"
 )
 
 type Model struct {
@@ -21,8 +21,6 @@ type Model struct {
 	Ctx      *ctx.Ctx
 	ErrorMsg errs.ErrorMsg
 	UI       ui.Model
-	// UI       ui.Model
-	// UX       ux.UX
 }
 
 func initialModel() Model {
@@ -92,6 +90,10 @@ func (m Model) View() string {
 }
 
 func main() {
+	// weird hack cuz teas logging doesnt support overwriting
+	f, _ := os.OpenFile("debug.log", os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0o644)
+	f.Close()
+
 	f, err := tea.LogToFile("debug.log", "debug")
 	if err != nil {
 		os.Exit(1)
@@ -100,12 +102,12 @@ func main() {
 
 	log.SetOutput(f)
 
-	vars.Program = tea.NewProgram(initialModel(),
+	consts.Program = tea.NewProgram(initialModel(),
 		tea.WithAltScreen(),
 		// tea.WithMouseCellMotion(),
 	)
 
-	if _, err := vars.Program.Run(); err != nil {
+	if _, err := consts.Program.Run(); err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
