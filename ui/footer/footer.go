@@ -1,3 +1,4 @@
+// Package footer provides Bubble Tea model for footer
 package footer
 
 import (

@@ -1,3 +1,4 @@
+// Package sidelist provides the item delegate for sidebar list
 package sidelist
 
 import (

@@ -1,8 +1,9 @@
+// Package ctx defines context which gets passed around (•ᴗ-)
 package ctx
 
 import (
 	"github.com/ealexandrohin/tuickly/ui/styles"
-	helix "github.com/nicklaw5/helix"
+	helix "github.com/nicklaw5/helix/v2"
 )
 
 type Ctx struct {

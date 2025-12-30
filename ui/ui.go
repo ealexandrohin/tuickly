@@ -1,3 +1,4 @@
+// Package ui provides the main UI Bubble Tea model
 package ui
 
 import (

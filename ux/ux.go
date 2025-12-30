@@ -1,3 +1,4 @@
+// Package ux consolidates UX models
 package ux
 
 import (

@@ -1,3 +1,4 @@
+// Package streamlist provides the item delegate for main stream list
 package streamlist
 
 import (

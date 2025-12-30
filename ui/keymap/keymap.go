@@ -1,3 +1,4 @@
+// Package keymap lists all of the keybindings
 package keymap
 
 import (

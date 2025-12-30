@@ -1,3 +1,4 @@
+// Package colors... wowie look at all those pwetty cowows! (◕‿◕✿)
 package colors
 
 import "github.com/charmbracelet/lipgloss"

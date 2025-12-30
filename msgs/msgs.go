@@ -1,3 +1,4 @@
+// Package msgs defines Bubble Tea messages
 package msgs
 
 import (
@@ -5,7 +6,7 @@ import (
 
 	"github.com/charmbracelet/bubbles/list"
 	"github.com/ealexandrohin/tuickly/ctx"
-	helix "github.com/nicklaw5/helix"
+	helix "github.com/nicklaw5/helix/v2"
 )
 
 // auth msgs

@@ -12,9 +12,12 @@ import (
 	"github.com/ealexandrohin/tuickly/ctx"
 	"github.com/ealexandrohin/tuickly/errs"
 	"github.com/ealexandrohin/tuickly/msgs"
-	helix "github.com/nicklaw5/helix"
+	helix "github.com/nicklaw5/helix/v2"
 )
 
+// checkAuth is a Bubble Tea command that checks for the existence of the
+// auth file.
+// It sends an [msgs.AuthExistsMsg] indicating whether the file was found.
 func checkAuth() tea.Cmd {
 	return func() tea.Msg {
 		if _, err := os.Stat(consts.AuthPath); os.IsNotExist(err) {
@@ -27,6 +30,9 @@ func checkAuth() tea.Cmd {
 	}
 }
 
+// newAuth is a Bubble Tea command that initiates a new DCF with Twitch.
+// It requests a device verification URI and code, then sends a [msgs.URIMsg]
+// or an [errs.ErrorMsg] if the request fails.
 func newAuth() tea.Cmd {
 	return func() tea.Msg {
 		r, err := consts.Client.RequestDeviceVerificationURI(consts.Scopes)
@@ -46,6 +52,9 @@ func newAuth() tea.Cmd {
 	}
 }
 
+// authTick is a Bubble Tea command that sends an [msgs.AuthTickMsg]
+// every 5 seconds. This is used to periodically check for device token
+// status during the auth flow.
 func authTick() tea.Cmd {
 	return tea.Tick(5*time.Second, func(t time.Time) tea.Msg {
 		log.Println("AuthTick")
@@ -53,6 +62,10 @@ func authTick() tea.Cmd {
 	})
 }
 
+// newToken is a Bubble Tea command that attempts to request a device access
+// token using the provided device code.
+// It handles `authorization_pending` by scheduling another [authTick].
+// On success, it sends a [msgs.TokenMsg]; otherwise, an [errs.ErrorMsg].
 func newToken(m msgs.URIMsg) tea.Cmd {
 	return func() tea.Msg {
 		r, err := consts.Client.RequestDeviceAccessToken(m.DeviceCode, consts.Scopes)
@@ -79,6 +92,10 @@ func newToken(m msgs.URIMsg) tea.Cmd {
 	}
 }
 
+// checkToken is a Bubble Tea command that validates the received access
+// token by fetching user's data.
+// It sets the access and refresh tokens on the global [helix.Client].
+// On success, it sends a [msgs.TokenUserMsg]; otherwise, an [errs.ErrorMsg].
 func checkToken(m msgs.TokenMsg) tea.Cmd {
 	return func() tea.Msg {
 		consts.Client.SetDeviceAccessToken(m.Token)
@@ -97,6 +114,10 @@ func checkToken(m msgs.TokenMsg) tea.Cmd {
 	}
 }
 
+// saveAuth is a Bubble Tea command that persists the auth data
+// [ctx.Auth] to a file using gob encoding.
+// It creates the configuration directory if it doesn't exist.
+// On success, it sends an [msgs.AuthMsg]; otherwise, an [errs.ErrorMsg].
 func saveAuth(m msgs.TokenUserMsg) tea.Cmd {
 	return func() tea.Msg {
 		auth := ctx.Auth{
@@ -128,6 +149,11 @@ func saveAuth(m msgs.TokenUserMsg) tea.Cmd {
 	}
 }
 
+// loadAuth is a Bubble Tea command that loads auth data from the saved file.
+// It decodes the gob-encoded data into an [ctx.Auth] and re-initializes
+// the global [helix.Client] with the saved options. On success,
+// it sends an [msgs.AuthMsg]; otherwise, it sends [msgs.AuthExistsMsg(false)]
+// or an [errs.ErrorMsg] if decoding or client re-initialization fails.
 func loadAuth() tea.Cmd {
 	return func() tea.Msg {
 		file, err := os.Open(consts.AuthPath)
@@ -152,6 +178,11 @@ func loadAuth() tea.Cmd {
 	}
 }
 
+// refreshToken is a Bubble Tea command that handles an incoming
+// [msgs.RefreshTokenMsg]. It updates the global [helix.Client] with
+// the new access and refresh tokens, fetches the user's data,
+// and then saves the updated auth context to the file.
+// On success, it sends a [msgs.RefreshAuthMsg]; otherwise, an [ErrorMsg].
 func refreshToken(m msgs.RefreshTokenMsg) tea.Cmd {
 	return func() tea.Msg {
 		consts.Client.SetDeviceAccessToken(m.Token)

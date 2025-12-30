@@ -1,3 +1,4 @@
+// Package consts consits of global constants
 package consts
 
 import (
@@ -6,7 +7,7 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/ealexandrohin/tuickly/msgs"
-	helix "github.com/nicklaw5/helix"
+	helix "github.com/nicklaw5/helix/v2"
 )
 
 const ClientID = "cqyppegp5st5bk2tg1nglqfd5krd4l"
@@ -32,9 +33,6 @@ func init() {
 	ConfigPath = filepath.Join(HomePath, ".config", "tuickly")
 	AuthPath = filepath.Join(ConfigPath, "auth.gob")
 
-	// proxyURL, _ := url.Parse("http://t879694:raiTh+e3hoot@192.168.1.240:3128")
-	// http.DefaultTransport = &http.Transport{Proxy: http.ProxyURL(proxyURL)}
-
 	Client, err = helix.NewClient(&helix.Options{
 		ClientID: ClientID,
 	})
@@ -43,6 +41,8 @@ func init() {
 	}
 
 	Client.OnUserAccessTokenRefreshed(func(newAccessToken string, newRefreshToken string) {
+		// apparently this doesnt work
+		// TODO: fix refreshing tokens
 		Program.Send(msgs.RefreshTokenMsg{
 			Token:   newAccessToken,
 			Refresh: newRefreshToken,

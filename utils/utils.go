@@ -11,7 +11,7 @@ import (
 	"github.com/charmbracelet/bubbles/list"
 	"github.com/muesli/termenv"
 	"github.com/nfnt/resize"
-	"github.com/nicklaw5/helix"
+	helix "github.com/nicklaw5/helix/v2"
 )
 
 // Humanize converts a large integer into a concise, human-readable string
@@ -158,15 +158,16 @@ func GetImagePreview(img image.Image, imageSize int) string {
 // GetStreamPreview fetches a thumbnail image from a stream and generates
 // a terminal-based preview of it.
 //
-// It takes a [helix.Stream] struct, which contains the stream details including
-// the 'ThumbnailURL' template, and a desired 'previewSize' (the target width
+// It takes a [helix.Stream], which contains the stream details including
+// the `ThumbnailURL` template, and a desired 'previewSize' (the target width
 // for the terminal preview).
 //
-// The 'ThumbnailURL' template is modified to request a 320x180 image size before
-// fetching. The image data is then decoded and passed to GetImagePreview for
+// The `ThumbnailURL` template is modified to request a 320x180 default Twitch's
+// image size before fetching.
+// The image data is then decoded and passed to GetImagePreview for
 // terminal rendering.
 //
-// It returns the ANSI-encoded string for the terminal preview or an error if
+// It returns the ANSI-encoded string for the terminal preview or an [error] if
 // fetching or decoding the image fails, or if the HTTP request is unsuccessful.
 func GetStreamPreview(stream helix.Stream, previewSize int) (string, error) {
 	thumbnailURL := strings.NewReplacer(

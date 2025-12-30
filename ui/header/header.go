@@ -1,3 +1,4 @@
+// Package header provides Bubble Tea model for header
 package header
 
 import (

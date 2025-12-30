@@ -1,3 +1,4 @@
+// Package sizes is part of Styles package that describes sizes of UI/UX elements
 package sizes
 
 type Sizes struct {

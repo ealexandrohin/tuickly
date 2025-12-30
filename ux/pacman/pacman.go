@@ -1,3 +1,4 @@
+// Package pacman provides a custom pacman spinner
 package pacman
 
 import (

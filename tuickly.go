@@ -1,4 +1,4 @@
-// Package tuickly is Twitch TUI.
+// Package tuickly is Twitch TUI
 package main
 
 import (

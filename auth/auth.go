@@ -1,3 +1,4 @@
+// Package auth is Bubble Tea model that handles auth for the Twitch API
 package auth
 
 import (

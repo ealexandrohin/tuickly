@@ -1,3 +1,4 @@
+// Package cmds defines Bubble Tea commands
 package cmds
 
 import (
@@ -5,7 +6,7 @@ import (
 
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/nicklaw5/helix"
+	helix "github.com/nicklaw5/helix/v2"
 
 	"github.com/ealexandrohin/tuickly/consts"
 	"github.com/ealexandrohin/tuickly/ctx"
@@ -15,6 +16,8 @@ import (
 	"github.com/ealexandrohin/tuickly/ux/items/stream"
 )
 
+// ClockTick is a Bubble Tea command that sends a [msgs.ClockTick] message
+// every second.
 func ClockTick() tea.Cmd {
 	// return tea.Tick(1*time.Minute, func(t time.Time) tea.Msg {
 	return tea.Tick(1*time.Second, func(t time.Time) tea.Msg {
@@ -22,6 +25,11 @@ func ClockTick() tea.Cmd {
 	})
 }
 
+// Live is a Bubble Tea command that fetches [helix.Stream] followed by the user.
+// It uses the [utils.Paginate] to retrieve all pages of followed streams.
+// For each stream, it generates a preview image.
+// On success, it returns a [msgs.LiveMsg] containing a slice of [list.Item]
+// representing the live streams. On error, it returns an [errs.ErrorMsg].
 func Live(ctx *ctx.Ctx) tea.Cmd {
 	return func() tea.Msg {
 		live, err := utils.Paginate(func(after string) ([]helix.Stream, string, error) {

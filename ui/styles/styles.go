@@ -1,3 +1,5 @@
+// Package styles defines all the [lipgloss] styles used for rendering UI,
+// including colors, sizes, and borders.
 package styles
 
 import (

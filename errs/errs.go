@@ -1,3 +1,4 @@
+// Package errs is for errors, ofc
 package errs
 
 type ErrorMsg struct {

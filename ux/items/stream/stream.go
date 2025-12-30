@@ -1,3 +1,4 @@
+// Package stream defines struct for a single Twitch stream for lists
 package stream
 
 import (
