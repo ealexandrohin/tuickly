@@ -32,7 +32,7 @@ To change account/reauth:
  3. Open again
 ## Roadmap
 - [x] Merge PR for Helix [#245](https://github.com/nicklaw5/helix/pull/245)
-- [ ] Merge PR for Bubbles
+- [ ] Merge PR for Bubbles [#871](https://github.com/charmbracelet/bubbles/pull/871)
 - [ ] Fix refreshing tokens
 ### Distribution
 - [x] Git releases
