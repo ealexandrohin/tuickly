@@ -1,8 +1,11 @@
 # tuickly
+![tuickly](../main/.github/logoLong.png)
 > HEAVY IN DEVELOPMENT / WORK IN PROGRESS
 
 Your own TUI for Twitch. Powered by [Bubble Tea](https://github.com/charmbracelet/bubbletea) and [Helix](https://github.com/nicklaw5/helix).
 Name comes from [tickly](https://github.com/ealexandrohin/tickly) which itself comes from [tCLI](https://github.com/ealexandrohin/tCLI).
+## Preview
+![tuickly](../main/.github/alpha.gif)
 ## Prerequisites
  - linux
  - go >= 1.25
