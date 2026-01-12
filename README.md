@@ -75,6 +75,7 @@ To change account/reauth:
 - [ ] Hide/open sidebar
 - [ ] Search in each UX element
 - [ ] Auto-resizing
+- [ ] Accept argv
 ### Configuration
 - [ ] Use `.json` or `.conf` file for configuration
 - [ ] Reauth
