@@ -76,6 +76,7 @@ To change account/reauth:
 - [ ] Search in each UX element
 - [ ] Auto-resizing
 - [ ] Accept argv
+- [ ] Use [chafa](https://github.com/hpjansson/chafa)/[chafa-go](https://github.com/ploMP4/chafa-go)
 ### Configuration
 - [ ] Use `.json` or `.conf` file for configuration
 - [ ] Reauth
